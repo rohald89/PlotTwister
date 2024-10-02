@@ -1,19 +1,27 @@
 import { invariantResponse } from '@epic-web/invariant'
+import { z } from 'zod'
+import { cachified, cache } from '#app/utils/cache.server.ts'
+import { type Timings } from '#app/utils/timing.server.ts'
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org'
 
-interface Movie {
-  id: number
-  title: string
-  backdrop_path: string
-  poster_path: string
+export const movieSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  backdrop_path: z.string().nullable(),
+  poster_path: z.string().nullable(),
   // Add other properties as needed
-}
+})
 
-interface TopRatedMoviesResponse {
-  results: Movie[]
+export type Movie = z.infer<typeof movieSchema>
+
+const topRatedMoviesSchema = z.object({
+  results: z.array(movieSchema),
+  total_pages: z.number(),
   // Add other properties as needed
-}
+})
+
+type TopRatedMoviesResponse = z.infer<typeof topRatedMoviesSchema>
 
 async function tmdbRequest<T>(endpoint: string): Promise<T> {
   const url = new URL(endpoint, TMDB_API_BASE_URL)
@@ -30,14 +38,33 @@ async function tmdbRequest<T>(endpoint: string): Promise<T> {
   return response.json() as T
 }
 
-export async function getMovie(movieId: string): Promise<Movie> {
-  const movie = await tmdbRequest<Movie>(`/3/movie/${movieId}`)
+export async function getMovie(movieId: string, { timings }: { timings?: Timings } = {}): Promise<Movie> {
+  const movie = await cachified({
+    key: `tmdb:movie:${movieId}`,
+    cache,
+    timings,
+    getFreshValue: () => tmdbRequest<Movie>(`/3/movie/${movieId}`),
+    checkValue: movieSchema,
+    ttl: 1000 * 60 * 60 * 24, // 24 hours
+    staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days
+  })
   invariantResponse(movie, 'Movie not found', { status: 404 })
   return movie
 }
 
-export async function getTopRatedMovies(page: number = 1): Promise<TopRatedMoviesResponse> {
-  return tmdbRequest<TopRatedMoviesResponse>(`/3/movie/top_rated?page=${page}`)
+export async function getTopRatedMovies(
+  page: number = 1,
+  { timings }: { timings?: Timings } = {}
+): Promise<TopRatedMoviesResponse> {
+  return cachified({
+    key: `tmdb:top-rated-movies:${page}`,
+    cache,
+    timings,
+    getFreshValue: () => tmdbRequest<TopRatedMoviesResponse>(`/3/movie/top_rated?page=${page}`),
+    checkValue: topRatedMoviesSchema,
+    ttl: 1000 * 60 * 60 * 24, // 24 hours
+    staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days
+  })
 }
 
 // Add other TMDB API functions as needed
