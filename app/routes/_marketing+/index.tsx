@@ -9,14 +9,20 @@ import { cn } from '#app/utils/misc.tsx'
 import { logos } from './logos/logos.ts'
 import { Link, useLoaderData } from '@remix-run/react'
 
+interface Movie {
+	id: number
+	title: string
+	poster_path: string
+}
+
 export const meta: MetaFunction = () => [{ title: 'Epic Notes' }]
 
 export async function loader() {
-	const movies = await fetch(
+	const response = await fetch(
 		`https://api.themoviedb.org/3/movie/top_rated?language=en-US&page=1&api_key=${process.env.TMDB_API_KEY}`,
-	).then((res) => res.json())
-
-	return json({ movies })
+	)
+	const data = await response.json()
+	return json({ movies: data as { results: Movie[] } })
 }
 
 export default function Index() {
@@ -31,7 +37,7 @@ export default function Index() {
 						'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
 					)}
 				>
-					{data.movies.results.map((movie) => (
+					{data.movies.results.map((movie: Movie) => (
 						<li key={movie.id} className="w-full">
 							<Link
 								to={`/movies/${movie.id}`}

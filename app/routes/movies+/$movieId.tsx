@@ -7,17 +7,27 @@ import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 
+// Define the Movie interface
+interface Movie {
+	id: number
+	title: string
+	backdrop_path: string
+	poster_path: string
+	// Add other properties as needed
+}
+
 export async function loader({ params }: LoaderFunctionArgs) {
-	const movie = await fetch(
+	const response = await fetch(
 		`https://api.themoviedb.org/3/movie/${params.movieId}?api_key=${process.env.TMDB_API_KEY}`,
-	).then((res) => res.json())
+	)
+	const movie = (await response.json()) as Movie
 
 	invariantResponse(movie, 'Movie not found', { status: 404 })
 
 	return json({ movie })
 }
 
-export default function ProfileRoute() {
+export default function MovieRoute() {
 	const data = useLoaderData<typeof loader>()
 	const movie = data.movie
 
@@ -36,6 +46,7 @@ export default function ProfileRoute() {
 						<div className="relative flex items-center gap-6">
 							<img
 								src={`https://image.tmdb.org/t/p/w185${movie.poster_path}`}
+								alt={movie.title}
 							></img>
 							<h1 className="text-h2">{movie.title}</h1>
 						</div>
@@ -87,12 +98,12 @@ export default function ProfileRoute() {
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data, params }) => {
-	const movie = data.movie
+	const movie = data?.movie
 	return [
-		{ title: `${movie.title} | PlotTwisters` },
+		{ title: `${movie?.title || 'Movie'} | PlotTwisters` },
 		{
 			name: 'description',
-			content: `Movie details for ${movie.title} on PlotTwisters`,
+			content: `Movie details for ${movie?.title || 'the movie'} on PlotTwisters`,
 		},
 	]
 }
