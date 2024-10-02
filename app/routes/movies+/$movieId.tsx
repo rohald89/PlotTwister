@@ -17,8 +17,6 @@ export default function MovieRoute() {
 	const data = useLoaderData<typeof loader>()
 	const movie = data.movie
 
-	console.log(movie)
-
 	return (
 		<div className="container mb-48 mt-36 flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat">
 			<Spacer size="4xs" />
