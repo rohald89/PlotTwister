@@ -6,6 +6,7 @@ import '#app/utils/env.server.ts'
 import { cleanup } from '@testing-library/react'
 import { afterEach, beforeEach, vi, type MockInstance } from 'vitest'
 import { server } from '#tests/mocks/index.ts'
+import { mockTopRatedMovies, mockMovie } from '../mocks/tmdb'
 import './custom-matchers.ts'
 
 afterEach(() => server.resetHandlers())
@@ -25,3 +26,8 @@ beforeEach(() => {
 		},
 	)
 })
+
+vi.mock('#app/utils/tmdb.server.ts', () => ({
+  getTopRatedMovies: vi.fn().mockResolvedValue(mockTopRatedMovies),
+  getMovie: vi.fn().mockResolvedValue(mockMovie),
+}))
