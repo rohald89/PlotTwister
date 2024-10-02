@@ -6,7 +6,7 @@ import '#app/utils/env.server.ts'
 import { cleanup } from '@testing-library/react'
 import { afterEach, beforeEach, vi, type MockInstance } from 'vitest'
 import { server } from '#tests/mocks/index.ts'
-import { mockTopRatedMovies, mockMovie } from '../mocks/tmdb'
+import { mockTopRatedMovies, mockMovie } from '../mocks/tmdb-data'
 import './custom-matchers.ts'
 
 afterEach(() => server.resetHandlers())
