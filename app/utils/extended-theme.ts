@@ -45,6 +45,10 @@ export const extendedTheme = {
 			foreground: 'hsl(var(--card-foreground))',
 		},
 	},
+    backgroundImage: {
+        'backdrop-gradient-dark': 'linear-gradient(rgba(2,8,23, 0.9), rgba(0, 0, 0, 0.7))',
+        'backdrop-gradient-light': 'linear-gradient(rgba(255,255,255, 0.9), rgba(255, 255, 255, 0.7))',
+      },
 	borderColor: {
 		DEFAULT: 'hsl(var(--border))',
 	},

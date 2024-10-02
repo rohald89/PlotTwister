@@ -18,17 +18,17 @@ export default function MovieRoute() {
 	const movie = data.movie
 
 	return (
-		<div className="container mb-48 mt-36 flex flex-col items-center justify-center bg-cover bg-center bg-no-repeat">
+		<div className="container mb-48 mt-36 flex flex-col items-center justify-center">
 			<Spacer size="4xs" />
 
 			<div
-				className="cover container flex flex-col rounded-3xl bg-muted bg-cover"
+				className="cover flex flex-col rounded-3xl bg-muted bg-cover bg-center"
 				style={{
-					backgroundImage: `linear-gradient(rgba(2,8,23, 0.9), rgba(0, 0, 0, 0.7)), url(https://image.tmdb.org/t/p/w780${movie.backdrop_path})`,
+					backgroundImage: `url(https://image.tmdb.org/t/p/w780${movie.backdrop_path})`,
 				}}
 			>
-				<div className="relative">
-					<div className="absolute -top-40">
+				<div className="bg-backdrop-gradient-light dark:bg-backdrop-gradient-dark relative min-h-[400px] w-full rounded-3xl">
+					<div className="absolute -top-40 left-10">
 						<div className="relative flex items-center gap-6">
 							<img
 								src={`https://image.tmdb.org/t/p/w185${movie.poster_path}`}
@@ -37,24 +37,24 @@ export default function MovieRoute() {
 							<h1 className="text-h2">{movie.title}</h1>
 						</div>
 					</div>
-				</div>
 
-				<div className="flex min-h-96 gap-8">
-					<div className="mt-32 min-w-40 space-y-3">
-						<div>
-							<h2 className="text-sm font-bold">Release Date</h2>
-							<p className="text-sm">{movie.release_date}</p>
+					<div className="flex min-h-96 gap-8 p-8 pl-16 pt-10">
+						<div className="mt-32 min-w-40 space-y-3">
+							<div>
+								<h2 className="text-sm font-bold">Release Date</h2>
+								<p className="text-sm">{movie.release_date}</p>
+							</div>
+							<div>
+								<h2 className="text-sm font-bold">Score</h2>
+								<p className="text-sm">{movie.vote_average}/10</p>
+							</div>
+							<div>
+								<h2 className="text-sm font-bold">Runtime</h2>
+								<p className="text-sm">{movie.runtime} minutes</p>
+							</div>
 						</div>
-						<div>
-							<h2 className="text-sm font-bold">Score</h2>
-							<p className="text-sm">{movie.vote_average}/10</p>
-						</div>
-						<div>
-							<h2 className="text-sm font-bold">Runtime</h2>
-							<p className="text-sm">{movie.runtime} minutes</p>
-						</div>
+						<div className="">{movie.overview}</div>
 					</div>
-					<div className="container mt-8">{movie.overview}</div>
 				</div>
 			</div>
 		</div>
