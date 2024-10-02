@@ -5,11 +5,26 @@ import { type Timings } from '#app/utils/timing.server.ts'
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org'
 
+const castMemberSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    character: z.string(),
+    profile_path: z.string().nullable(),
+})
+
 export const movieSchema = z.object({
   id: z.number(),
   title: z.string(),
+  overview: z.string(),
   backdrop_path: z.string().nullable(),
   poster_path: z.string().nullable(),
+  release_date: z.string(),
+  vote_average: z.number(),
+  // Made optional as these will not be returned on top rated query
+  runtime: z.number().optional(),
+  credits: z.object({
+    cast: z.array(castMemberSchema)
+  }).optional()
   // Add other properties as needed
 })
 
@@ -43,7 +58,7 @@ export async function getMovie(movieId: string, { timings }: { timings?: Timings
     key: `tmdb:movie:${movieId}`,
     cache,
     timings,
-    getFreshValue: () => tmdbRequest<Movie>(`/3/movie/${movieId}`),
+    getFreshValue: () => tmdbRequest<Movie>(`/3/movie/${movieId}?append_to_response=credits`),
     checkValue: movieSchema,
     ttl: 1000 * 60 * 60 * 24, // 24 hours
     staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days
