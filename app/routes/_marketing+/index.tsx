@@ -1,4 +1,4 @@
-import { json, type MetaFunction } from '@remix-run/node'
+import { json, LoaderFunctionArgs, type MetaFunction } from '@remix-run/node'
 import {
 	Tooltip,
 	TooltipContent,
@@ -8,6 +8,7 @@ import {
 import { cn } from '#app/utils/misc.tsx'
 import { logos } from './logos/logos.ts'
 import { Link, useLoaderData } from '@remix-run/react'
+import { getTopRatedMovies } from '#app/utils/tmdb.server.ts'
 
 interface Movie {
 	id: number
@@ -17,12 +18,12 @@ interface Movie {
 
 export const meta: MetaFunction = () => [{ title: 'Epic Notes' }]
 
-export async function loader() {
-	const response = await fetch(
-		`https://api.themoviedb.org/3/movie/top_rated?language=en-US&page=1&api_key=${process.env.TMDB_API_KEY}`,
-	)
-	const data = await response.json()
-	return json({ movies: data as { results: Movie[] } })
+export async function loader({ request }: LoaderFunctionArgs) {
+	const url = new URL(request.url)
+	const page = url.searchParams.get('page') || '1'
+	const pageNumber = parseInt(page, 10)
+	const { results } = await getTopRatedMovies(pageNumber)
+	return json({ movies: { results } })
 }
 
 export default function Index() {

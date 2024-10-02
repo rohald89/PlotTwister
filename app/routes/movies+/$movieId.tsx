@@ -6,24 +6,10 @@ import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
-
-// Define the Movie interface
-interface Movie {
-	id: number
-	title: string
-	backdrop_path: string
-	poster_path: string
-	// Add other properties as needed
-}
+import { getMovie } from '#app/utils/tmdb.server.ts'
 
 export async function loader({ params }: LoaderFunctionArgs) {
-	const response = await fetch(
-		`https://api.themoviedb.org/3/movie/${params.movieId}?api_key=${process.env.TMDB_API_KEY}`,
-	)
-	const movie = (await response.json()) as Movie
-
-	invariantResponse(movie, 'Movie not found', { status: 404 })
-
+	const movie = await getMovie(params.movieId!)
 	return json({ movie })
 }
 
