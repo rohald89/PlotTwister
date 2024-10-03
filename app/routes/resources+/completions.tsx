@@ -60,9 +60,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	})
 	return eventStream(controller.signal, function setup(send) {
 		async function handleStream() {
-			for await (const part of stream) {
-				const delta = part.choices[0]?.delta?.content?.replace(/\n/g, '␣')
-				if (delta) send({ data: delta })
+			try {
+				for await (const part of stream) {
+					const delta = part.choices[0]?.delta?.content?.replace(/\n/g, '␣')
+					if (delta) send({ data: delta })
+				}
+			} catch (error) {
+				console.error('Error in OpenAI stream:', error)
+				send({ event: 'error', data: 'An error occurred' })
+			} finally {
+				send({ event: 'done', data: '' })
 			}
 		}
 		handleStream().then(
@@ -70,5 +77,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			() => controller.abort(),
 		)
 		return function clear() {}
+	}, {
+		headers: {
+			'Content-Type': 'text/event-stream',
+			'Cache-Control': 'no-cache',
+			'Connection': 'keep-alive',
+		},
 	})
 }
