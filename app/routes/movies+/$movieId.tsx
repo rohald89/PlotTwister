@@ -31,6 +31,7 @@ export default function MovieRoute() {
 					<div className="absolute -top-40 left-10">
 						<div className="relative flex items-center gap-6">
 							<img
+								className="rounded-sm"
 								src={`https://image.tmdb.org/t/p/w185${movie.poster_path}`}
 								alt={movie.title}
 							></img>
