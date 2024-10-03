@@ -9,7 +9,7 @@ import {
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { type AlternateEnding } from '@prisma/client'
 import { type SerializeFrom } from '@remix-run/node'
-import { Form, useActionData } from '@remix-run/react'
+import { Form, useActionData, useNavigate } from '@remix-run/react'
 import { z } from 'zod'
 import { ErrorList, Field, TextareaField } from '#app/components/forms.tsx'
 import { Button } from '#app/components/ui/button.tsx'
@@ -42,6 +42,7 @@ export function AlternateEndingEditor({
 	tmdbMovieId: number
 	movieTitle: string
 }) {
+	const navigate = useNavigate()
 	const actionData = useActionData<typeof action>()
 	const isPending = useIsPending()
 	const [content, setContent] = useState(alternateEnding?.content ?? '')
@@ -62,6 +63,76 @@ export function AlternateEndingEditor({
 		},
 		shouldRevalidate: 'onBlur',
 	})
+
+	async function generateTitle(
+		movieTitle: string,
+		prompt: string,
+		setTitle: React.Dispatch<React.SetStateAction<string>>,
+	) {
+		const url = `/resources/completions?${new URLSearchParams({
+			type: 'title',
+			movieTitle,
+			prompt,
+		})}`
+		console.log('Connecting to SSE:', url)
+
+		try {
+			// First, make a HEAD request to check authentication
+			const response = await fetch(url, { method: 'HEAD' })
+			if (response.status === 401 || response.status === 302) {
+				// User is not authenticated, redirect to login
+				navigate(`/login?redirectTo=${encodeURIComponent(url)}`)
+				return
+			}
+
+			const sse = new EventSource(url)
+			setTitle('')
+			sse.addEventListener('open', (event) => {
+				console.log('SSE connection opened:', event)
+			})
+			sse.addEventListener('message', (event) => {
+				console.log('SSE message received:', event)
+				setTitle((prevTitle) => prevTitle + event.data.replaceAll('␣', '\n'))
+			})
+			sse.addEventListener('error', (event) => {
+				console.error('SSE Error:', event)
+				console.error('SSE ReadyState:', sse.readyState)
+				setTitle('An error occurred while generating the title.')
+				sse.close()
+			})
+			sse.addEventListener('done', (event) => {
+				console.log('SSE done event received:', event)
+				sse.close()
+			})
+		} catch (error) {
+			console.error('Error setting up SSE:', error)
+			setTitle('An error occurred while setting up the connection.')
+		}
+	}
+
+	function generateContent(
+		movieTitle: string,
+		prompt: string,
+		setContent: React.Dispatch<React.SetStateAction<string>>,
+	) {
+		const sse = new EventSource(
+			`/resources/completions?${new URLSearchParams({
+				type: 'content',
+				movieTitle,
+				prompt,
+			})}`,
+		)
+		setContent('')
+		sse.addEventListener('message', (event) => {
+			setContent(
+				(prevContent) => prevContent + event.data.replaceAll('␣', '\n'),
+			)
+		})
+		sse.addEventListener('error', (event) => {
+			console.log('error: ', event)
+			sse.close()
+		})
+	}
 
 	return (
 		<FormProvider context={form.context}>
@@ -146,52 +217,4 @@ export function AlternateEndingEditor({
 			</Form>
 		</FormProvider>
 	)
-}
-
-function generateTitle(
-	movieTitle: string,
-	prompt: string,
-	setTitle: React.Dispatch<React.SetStateAction<string>>,
-) {
-	const sse = new EventSource(
-		`/resources/completions?${new URLSearchParams({
-			type: 'title',
-			movieTitle,
-			prompt,
-		})}`,
-	)
-	setTitle('')
-	sse.addEventListener('message', (event) => {
-		setTitle((prevTitle) => prevTitle + event.data.replaceAll('␣', '\n'))
-	})
-	sse.addEventListener('error', (event) => {
-		console.error('SSE Error:', event)
-		setTitle('An error occurred while generating the title.')
-		sse.close()
-	})
-	sse.addEventListener('done', () => {
-		sse.close()
-	})
-}
-
-function generateContent(
-	movieTitle: string,
-	prompt: string,
-	setContent: React.Dispatch<React.SetStateAction<string>>,
-) {
-	const sse = new EventSource(
-		`/resources/completions?${new URLSearchParams({
-			type: 'content',
-			movieTitle,
-			prompt,
-		})}`,
-	)
-	setContent('')
-	sse.addEventListener('message', (event) => {
-		setContent((prevContent) => prevContent + event.data.replaceAll('␣', '\n'))
-	})
-	sse.addEventListener('error', (event) => {
-		console.log('error: ', event)
-		sse.close()
-	})
 }
