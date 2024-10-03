@@ -1,29 +1,39 @@
-import { invariantResponse } from '@epic-web/invariant'
 import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import {
-	Form,
-	Link,
-	useLoaderData,
-	useNavigate,
-	type MetaFunction,
-} from '@remix-run/react'
+import { useLoaderData, useNavigate, type MetaFunction } from '@remix-run/react'
+import { useState, useRef } from 'react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { getMovie } from '#app/utils/tmdb.server.ts'
+import { AlternateEndingEditor } from './__ending-editor'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const movie = await getMovie(params.movieId!)
+	const alternateEndings = await prisma.alternateEnding.findMany({
+		select: {
+			id: true,
+			title: true,
+			content: true,
+			author: true,
+		},
+		where: {
+			tmdbMovieId: Number(params.movieId),
+		},
+	})
 
-	return json({ movie })
+	return json({ movie, alternateEndings })
 }
+
+export { action } from './__ending-editor.server'
 
 export default function MovieRoute() {
 	const data = useLoaderData<typeof loader>()
 	const movie = data.movie
 	const navigate = useNavigate()
+	const [showEditor, setShowEditor] = useState(false)
+	const editorRef = useRef<HTMLDivElement>(null)
 
 	return (
 		<div className="container mb-48 mt-4 flex flex-col items-center justify-center">
@@ -75,6 +85,43 @@ export default function MovieRoute() {
 					</div>
 				</div>
 			</div>
+
+			<div className="w-full max-w-3xl">
+				<div className="flex items-center justify-between">
+					<h2 className="text-h3">Alternate Endings</h2>
+					<Button
+						onClick={() => {
+							setShowEditor(true)
+							setTimeout(
+								() => editorRef.current?.scrollIntoView({ behavior: 'smooth' }),
+								0,
+							)
+						}}
+					>
+						Create New Ending
+					</Button>
+				</div>
+				{data.alternateEndings.map((ending) => (
+					<div key={ending.id} className="my-4 rounded-lg border p-4">
+						<h3 className="text-h4">{ending.title}</h3>
+						<p className="mb-3 italic">by {ending.author.username}</p>
+						<p>{ending.content}</p>
+					</div>
+				))}
+			</div>
+
+			{showEditor && (
+				<div ref={editorRef} className="mt-8 w-full max-w-3xl">
+					<h2 className="mb-4 text-h3">
+						{data.alternateEndings.length === 0 ? 'Create' : 'Add'} Alternate
+						Ending
+					</h2>
+					<AlternateEndingEditor
+						tmdbMovieId={Number(movie.id)}
+						movieTitle={movie.title}
+					/>
+				</div>
+			)}
 		</div>
 	)
 }

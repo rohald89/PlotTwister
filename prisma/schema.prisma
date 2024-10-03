@@ -25,6 +25,20 @@ model User {
   roles       Role[]
   sessions    Session[]
   connections Connection[]
+  alternateEndings AlternateEnding[]
+}
+
+model AlternateEnding {
+    id String @id @default(cuid())
+    title String
+    content String
+    tmdbMovieId Int
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    author User @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    authorId String
 }
 
 model Note {
