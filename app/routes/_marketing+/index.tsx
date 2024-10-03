@@ -1,5 +1,11 @@
 import { type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node'
-import { defer, Await, Form, Link, useLoaderData } from '@remix-run/react'
+import {
+	defer,
+	Await,
+	Link,
+	useLoaderData,
+	useSearchParams,
+} from '@remix-run/react'
 import { Suspense } from 'react'
 import { Button } from '#app/components/ui/button'
 import { cn } from '#app/utils/misc.tsx'
@@ -28,31 +34,10 @@ export default function Index() {
 				<Await resolve={movies}>
 					{(movies) => (
 						<>
-							<div className="flex justify-center gap-4">
-								<Form>
-									<Button
-										type="submit"
-										name="page"
-										value={currentPage - 1}
-										disabled={currentPage <= 1}
-									>
-										Previous
-									</Button>
-								</Form>
-								<span className="flex items-center">
-									Page {currentPage} of {movies.total_pages}
-								</span>
-								<Form>
-									<Button
-										type="submit"
-										name="page"
-										value={currentPage + 1}
-										disabled={currentPage >= movies.total_pages}
-									>
-										Next
-									</Button>
-								</Form>
-							</div>
+							<Pagination
+								currentPage={currentPage}
+								totalPages={movies.total_pages}
+							/>
 							<ul
 								className={cn(
 									'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
@@ -76,7 +61,6 @@ export default function Index() {
 									</li>
 								))}
 							</ul>
-
 							<Pagination
 								currentPage={currentPage}
 								totalPages={movies.total_pages}
@@ -96,31 +80,25 @@ function Pagination({
 	currentPage: number
 	totalPages: number
 }) {
+	const [searchParams] = useSearchParams()
+
+	const createPageLink = (page: number) => {
+		const newSearchParams = new URLSearchParams(searchParams)
+		newSearchParams.set('page', page.toString())
+		return `?${newSearchParams.toString()}`
+	}
+
 	return (
 		<div className="flex justify-center gap-4">
-			<Form>
-				<Button
-					type="submit"
-					name="page"
-					value={currentPage - 1}
-					disabled={currentPage <= 1}
-				>
-					Previous
-				</Button>
-			</Form>
+			<Button asChild disabled={currentPage <= 1}>
+				<Link to={createPageLink(currentPage - 1)}>Previous</Link>
+			</Button>
 			<span className="flex items-center">
 				Page {currentPage} of {totalPages}
 			</span>
-			<Form>
-				<Button
-					type="submit"
-					name="page"
-					value={currentPage + 1}
-					disabled={currentPage >= totalPages}
-				>
-					Next
-				</Button>
-			</Form>
+			<Button asChild disabled={currentPage >= totalPages}>
+				<Link to={createPageLink(currentPage + 1)}>Next</Link>
+			</Button>
 		</div>
 	)
 }

@@ -1,6 +1,12 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import { Form, Link, useLoaderData, type MetaFunction } from '@remix-run/react'
+import {
+	Form,
+	Link,
+	useLoaderData,
+	useNavigate,
+	type MetaFunction,
+} from '@remix-run/react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
@@ -10,16 +16,27 @@ import { getMovie } from '#app/utils/tmdb.server.ts'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const movie = await getMovie(params.movieId!)
+
 	return json({ movie })
 }
 
 export default function MovieRoute() {
 	const data = useLoaderData<typeof loader>()
 	const movie = data.movie
+	const navigate = useNavigate()
 
 	return (
-		<div className="container mb-48 mt-36 flex flex-col items-center justify-center">
-			<Spacer size="4xs" />
+		<div className="container mb-48 mt-4 flex flex-col items-center justify-center">
+			<Button
+				variant="ghost"
+				onClick={() => navigate(-1)}
+				className="mb-4 self-start"
+			>
+				<Icon name="arrow-left" className="mr-2" />
+				Back
+			</Button>
+
+			<Spacer size="4xl" />
 
 			<div
 				className="cover flex flex-col rounded-3xl bg-muted bg-cover bg-center"
@@ -27,7 +44,7 @@ export default function MovieRoute() {
 					backgroundImage: `url(https://image.tmdb.org/t/p/w780${movie.backdrop_path})`,
 				}}
 			>
-				<div className="bg-backdrop-gradient-light dark:bg-backdrop-gradient-dark relative min-h-[400px] w-full rounded-3xl">
+				<div className="relative min-h-[400px] w-full rounded-3xl bg-backdrop-gradient-light dark:bg-backdrop-gradient-dark">
 					<div className="absolute -top-40 left-10">
 						<div className="relative flex items-center gap-6">
 							<img
