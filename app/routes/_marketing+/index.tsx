@@ -12,7 +12,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const page = url.searchParams.get('page') || '1'
 	const pageNumber = parseInt(page, 10)
 	const movies = getTopRatedMovies(pageNumber).then(async (result) => {
-		await new Promise((resolve) => setTimeout(resolve, 1000))
+		// await new Promise((resolve) => setTimeout(resolve, 1000))
 		return result
 	})
 	return defer({ movies, currentPage: pageNumber })
