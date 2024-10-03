@@ -1,12 +1,18 @@
 import closeWithGrace from 'close-with-grace'
 import { setupServer } from 'msw/node'
+import { passthrough, http } from 'msw'
 import { handlers as githubHandlers } from './github.ts'
 import { handlers as resendHandlers } from './resend.ts'
 import { createTmdbHandlers } from './tmdb.ts'
 
 const tmdbApiKey = process.env.TMDB_API_KEY
 
+const miscHandlers = [
+    http.post('https://api.openai.com/v1/chat/completions', passthrough),
+].filter(Boolean)
+
 const allHandlers = [
+  ...miscHandlers,
   ...resendHandlers,
   ...githubHandlers,
   ...(tmdbApiKey ? [] : createTmdbHandlers()),
