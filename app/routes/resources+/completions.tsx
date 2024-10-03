@@ -12,12 +12,14 @@ const openai = new OpenAI({
 	apiKey: apiKey,
 })
 export async function loader({ request }: LoaderFunctionArgs) {
+	console.log('Completions loader called')
 	const userId = await requireUserId(request)
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
 		select: { name: true, username: true },
 	})
 	if (!user) {
+		console.log('User not found')
 		await authenticator.logout(request, { redirectTo: '/' })
 		return new Response(null, { status: 401 })
 	}
@@ -26,10 +28,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const movieTitle = url.searchParams.get('movieTitle')
 	const prompt = url.searchParams.get('prompt')
 
-	invariant(
-		type && movieTitle && prompt,
-		'Must provide type, movieTitle, and prompt',
-	)
+	console.log('Request parameters:', { type, movieTitle, prompt })
+
+	try {
+		invariant(
+			type && movieTitle && prompt,
+			'Must provide type, movieTitle, and prompt',
+		)
+	} catch (error) {
+		console.error('Invariant check failed:', error)
+		return new Response('Invalid request parameters', { status: 400 })
+	}
 
 	const messages: Array<ChatCompletionMessageParam> = [
 		{
@@ -63,28 +72,38 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		function setup(send) {
 			async function handleStream() {
 				try {
+					console.log('Starting OpenAI stream')
 					for await (const part of stream) {
 						const delta = part.choices[0]?.delta?.content?.replace(/\n/g, '␣')
-						if (delta) send({ data: delta })
+						if (delta) {
+							console.log('Sending delta:', delta)
+							send({ data: delta })
+						}
 					}
 				} catch (error) {
 					console.error('Error in OpenAI stream:', error)
 					send({ event: 'error', data: 'An error occurred' })
 				} finally {
+					console.log('Stream finished')
 					send({ event: 'done', data: '' })
 				}
 			}
 			handleStream().then(
 				() => controller.abort(),
-				() => controller.abort(),
+				(error) => {
+					console.error('handleStream error:', error)
+					controller.abort()
+				},
 			)
-			return function clear() {}
+			return function clear() {
+				console.log('SSE connection closed')
+			}
 		},
 		{
 			headers: {
 				'Content-Type': 'text/event-stream',
 				'Cache-Control': 'no-cache',
-				Connection: 'keep-alive',
+				'Connection': 'keep-alive',
 			},
 		},
 	)

@@ -153,23 +153,29 @@ function generateTitle(
 	prompt: string,
 	setTitle: React.Dispatch<React.SetStateAction<string>>,
 ) {
-	const sse = new EventSource(
-		`/resources/completions?${new URLSearchParams({
-			type: 'title',
-			movieTitle,
-			prompt,
-		})}`,
-	)
+	const url = `/resources/completions?${new URLSearchParams({
+		type: 'title',
+		movieTitle,
+		prompt,
+	})}`
+	console.log('Connecting to SSE:', url)
+	const sse = new EventSource(url)
 	setTitle('')
+	sse.addEventListener('open', (event) => {
+		console.log('SSE connection opened:', event)
+	})
 	sse.addEventListener('message', (event) => {
+		console.log('SSE message received:', event)
 		setTitle((prevTitle) => prevTitle + event.data.replaceAll('␣', '\n'))
 	})
 	sse.addEventListener('error', (event) => {
 		console.error('SSE Error:', event)
+		console.error('SSE ReadyState:', sse.readyState)
 		setTitle('An error occurred while generating the title.')
 		sse.close()
 	})
-	sse.addEventListener('done', () => {
+	sse.addEventListener('done', (event) => {
+		console.log('SSE done event received:', event)
 		sse.close()
 	})
 }
