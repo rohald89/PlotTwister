@@ -15,8 +15,8 @@ export const meta: MetaFunction = () => [{ title: 'Epic Notes' }]
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const url = new URL(request.url)
-	const page = url.searchParams.get('page') || '1'
-	const pageNumber = parseInt(page, 10)
+	const pageParam = url.searchParams.get('page') || '1'
+	const pageNumber = Math.max(1, parseInt(pageParam, 10) || 1)
 	const movies = getTopRatedMovies(pageNumber).then(async (result) => {
 		// await new Promise((resolve) => setTimeout(resolve, 1000))
 		return result
@@ -90,15 +90,23 @@ function Pagination({
 
 	return (
 		<div className="flex justify-center gap-4">
-			<Button asChild disabled={currentPage <= 1}>
-				<Link to={createPageLink(currentPage - 1)}>Previous</Link>
-			</Button>
+			{currentPage > 1 ? (
+				<Button asChild>
+					<Link to={createPageLink(currentPage - 1)}>Previous</Link>
+				</Button>
+			) : (
+				<Button disabled>Previous</Button>
+			)}
 			<span className="flex items-center">
 				Page {currentPage} of {totalPages}
 			</span>
-			<Button asChild disabled={currentPage >= totalPages}>
-				<Link to={createPageLink(currentPage + 1)}>Next</Link>
-			</Button>
+			{currentPage < totalPages ? (
+				<Button asChild>
+					<Link to={createPageLink(currentPage + 1)}>Next</Link>
+				</Button>
+			) : (
+				<Button disabled>Next</Button>
+			)}
 		</div>
 	)
 }
