@@ -165,7 +165,11 @@ function generateTitle(
 		setTitle((prevTitle) => prevTitle + event.data.replaceAll('␣', '\n'))
 	})
 	sse.addEventListener('error', (event) => {
-		console.log('error: ', event)
+		console.error('SSE Error:', event)
+		setTitle('An error occurred while generating the title.')
+		sse.close()
+	})
+	sse.addEventListener('done', () => {
 		sse.close()
 	})
 }
