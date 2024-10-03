@@ -5,8 +5,11 @@ import { type ChatCompletionMessageParam } from 'openai/resources/index.mjs'
 import { eventStream } from 'remix-utils/sse/server'
 import { authenticator, requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
+
+const apiKey = process.env.OPENAI_API_KEY || 'dummy-key'
+
 const openai = new OpenAI({
-	apiKey: process.env.OPENAI_API_KEY,
+	apiKey: apiKey,
 })
 export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)

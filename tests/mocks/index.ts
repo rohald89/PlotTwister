@@ -9,22 +9,25 @@ const tmdbApiKey = process.env.TMDB_API_KEY
 const openaiApiKey = process.env.OPENAI_API_KEY
 
 const miscHandlers = [
-    openaiApiKey
-        ? http.post('https://api.openai.com/v1/chat/completions', passthrough)
-        : http.post('https://api.openai.com/v1/chat/completions', () => {
-              return new Response(
-                  JSON.stringify({
-                      choices: [
-							{
-								message: {
-									content: 'Mocked OpenAI response',
-								},
-                          },
-                      ],
-                  }),
-                  { status: 200, headers: { 'Content-Type': 'application/json' } }
-              )
-          }),
+    http.post('https://api.openai.com/v1/chat/completions', async ({ request }) => {
+        if (openaiApiKey) {
+            return passthrough()
+        }
+
+        // Mock response
+        return new Response(
+            JSON.stringify({
+                choices: [
+                    {
+                        message: {
+                            content: 'Mocked OpenAI response',
+                        },
+                    },
+                ],
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )
+    }),
 ].filter(Boolean)
 
 const allHandlers = [
