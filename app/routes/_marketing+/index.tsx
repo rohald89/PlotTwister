@@ -1,101 +1,129 @@
-import { type MetaFunction } from '@remix-run/node'
+import { type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node'
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '#app/components/ui/tooltip.tsx'
+	defer,
+	Await,
+	Link,
+	useLoaderData,
+	useSearchParams,
+} from '@remix-run/react'
+import { Suspense } from 'react'
+import { Button } from '#app/components/ui/button'
 import { cn } from '#app/utils/misc.tsx'
-import { logos } from './logos/logos.ts'
+import { getTopRatedMovies, type Movie } from '#app/utils/tmdb.server.ts'
 
 export const meta: MetaFunction = () => [{ title: 'Epic Notes' }]
 
-// Tailwind Grid cell classes lookup
-const columnClasses: Record<(typeof logos)[number]['column'], string> = {
-	1: 'xl:col-start-1',
-	2: 'xl:col-start-2',
-	3: 'xl:col-start-3',
-	4: 'xl:col-start-4',
-	5: 'xl:col-start-5',
-}
-const rowClasses: Record<(typeof logos)[number]['row'], string> = {
-	1: 'xl:row-start-1',
-	2: 'xl:row-start-2',
-	3: 'xl:row-start-3',
-	4: 'xl:row-start-4',
-	5: 'xl:row-start-5',
-	6: 'xl:row-start-6',
+export async function loader({ request }: LoaderFunctionArgs) {
+	const url = new URL(request.url)
+	const page = url.searchParams.get('page') || '1'
+	const pageNumber = parseInt(page, 10)
+	const movies = getTopRatedMovies(pageNumber).then(async (result) => {
+		// await new Promise((resolve) => setTimeout(resolve, 1000))
+		return result
+	})
+	return defer({ movies, currentPage: pageNumber })
 }
 
 export default function Index() {
+	const { movies, currentPage } = useLoaderData<typeof loader>()
 	return (
-		<main className="font-poppins grid h-full place-items-center">
-			<div className="grid place-items-center px-4 py-16 xl:grid-cols-2 xl:gap-24">
-				<div className="flex max-w-md flex-col items-center text-center xl:order-2 xl:items-start xl:text-left">
-					<a
-						href="https://www.epicweb.dev/stack"
-						className="animate-slide-top [animation-fill-mode:backwards] xl:animate-slide-left xl:[animation-delay:0.5s] xl:[animation-fill-mode:backwards]"
-					>
-						<svg
-							className="size-20 text-foreground xl:-mt-4"
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 65 65"
-						>
-							<path
-								fill="currentColor"
-								d="M39.445 25.555 37 17.163 65 0 47.821 28l-8.376-2.445Zm-13.89 0L28 17.163 0 0l17.179 28 8.376-2.445Zm13.89 13.89L37 47.837 65 65 47.821 37l-8.376 2.445Zm-13.89 0L28 47.837 0 65l17.179-28 8.376 2.445Z"
-							></path>
-						</svg>
-					</a>
-					<h1
-						data-heading
-						className="mt-8 animate-slide-top text-4xl font-medium text-foreground [animation-delay:0.3s] [animation-fill-mode:backwards] md:text-5xl xl:mt-4 xl:animate-slide-left xl:text-6xl xl:[animation-delay:0.8s] xl:[animation-fill-mode:backwards]"
-					>
-						<a href="https://www.epicweb.dev/stack">The Epic Stack</a>
-					</h1>
-					<p
-						data-paragraph
-						className="mt-6 animate-slide-top text-xl/7 text-muted-foreground [animation-delay:0.8s] [animation-fill-mode:backwards] xl:mt-8 xl:animate-slide-left xl:text-xl/6 xl:leading-10 xl:[animation-delay:1s] xl:[animation-fill-mode:backwards]"
-					>
-						Check the{' '}
-						<a
-							className="underline hover:no-underline"
-							href="https://github.com/epicweb-dev/epic-stack/blob/main/docs/getting-started.md"
-						>
-							Getting Started guide
-						</a>{' '}
-						file for how to get your project off the ground!
-					</p>
-				</div>
-				<ul className="mt-16 flex max-w-3xl flex-wrap justify-center gap-2 sm:gap-4 xl:mt-0 xl:grid xl:grid-flow-col xl:grid-cols-5 xl:grid-rows-6">
-					<TooltipProvider>
-						{logos.map((logo, i) => (
-							<li
-								key={logo.href}
+		<main className="font-poppins container mb-20 flex flex-col items-center justify-center gap-6">
+			<h1 className="text-h1">Top Rated Movies</h1>
+
+			<Suspense fallback={<MovieSkeletonGrid />}>
+				<Await resolve={movies}>
+					{(movies) => (
+						<>
+							<Pagination
+								currentPage={currentPage}
+								totalPages={movies.total_pages}
+							/>
+							<ul
 								className={cn(
-									columnClasses[logo.column],
-									rowClasses[logo.row],
-									'animate-roll-reveal [animation-fill-mode:backwards]',
+									'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
 								)}
-								style={{ animationDelay: `${i * 0.07}s` }}
 							>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<a
-											href={logo.href}
-											className="grid size-20 place-items-center rounded-2xl bg-violet-600/10 p-4 transition hover:-rotate-6 hover:bg-violet-600/15 dark:bg-violet-200 dark:hover:bg-violet-100 sm:size-24"
+								{(movies.results as Movie[]).map((movie) => (
+									<li key={movie.id} className="w-full">
+										<Link
+											to={`/movies/${movie.id}`}
+											className="flex h-full flex-col items-center justify-between rounded-lg bg-muted p-3"
 										>
-											<img src={logo.src} alt="" />
-										</a>
-									</TooltipTrigger>
-									<TooltipContent>{logo.alt}</TooltipContent>
-								</Tooltip>
-							</li>
-						))}
-					</TooltipProvider>
-				</ul>
-			</div>
+											<img
+												src={`https://image.tmdb.org/t/p/w185${movie.poster_path}`}
+												alt={movie.title}
+												className="w-full object-cover"
+											/>
+											<h2 className="text-small mt-2 line-clamp-2 text-center font-bold">
+												{movie.title}
+											</h2>
+										</Link>
+									</li>
+								))}
+							</ul>
+							<Pagination
+								currentPage={currentPage}
+								totalPages={movies.total_pages}
+							/>
+						</>
+					)}
+				</Await>
+			</Suspense>
 		</main>
+	)
+}
+
+function Pagination({
+	currentPage,
+	totalPages,
+}: {
+	currentPage: number
+	totalPages: number
+}) {
+	const [searchParams] = useSearchParams()
+
+	const createPageLink = (page: number) => {
+		const newSearchParams = new URLSearchParams(searchParams)
+		newSearchParams.set('page', page.toString())
+		return `?${newSearchParams.toString()}`
+	}
+
+	return (
+		<div className="flex justify-center gap-4">
+			<Button asChild disabled={currentPage <= 1}>
+				<Link to={createPageLink(currentPage - 1)}>Previous</Link>
+			</Button>
+			<span className="flex items-center">
+				Page {currentPage} of {totalPages}
+			</span>
+			<Button asChild disabled={currentPage >= totalPages}>
+				<Link to={createPageLink(currentPage + 1)}>Next</Link>
+			</Button>
+		</div>
+	)
+}
+
+function MovieSkeleton() {
+	return (
+		<div className="flex h-full w-full animate-pulse flex-col items-center justify-between rounded-lg bg-muted p-3">
+			<div className="h-[185px] w-full rounded bg-gray-300"></div>
+			<div className="mt-2 h-4 w-3/4 rounded bg-gray-300"></div>
+		</div>
+	)
+}
+
+function MovieSkeletonGrid() {
+	return (
+		<ul
+			className={cn(
+				'grid w-full grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
+			)}
+		>
+			{Array.from({ length: 20 }).map((_, index) => (
+				<li key={index} className="w-full">
+					<MovieSkeleton />
+				</li>
+			))}
+		</ul>
 	)
 }
