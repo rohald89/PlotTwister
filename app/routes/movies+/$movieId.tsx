@@ -1,12 +1,6 @@
-import { invariantResponse } from '@epic-web/invariant'
 import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import {
-	Form,
-	Link,
-	useLoaderData,
-	useNavigate,
-	type MetaFunction,
-} from '@remix-run/react'
+import { useLoaderData, useNavigate, type MetaFunction } from '@remix-run/react'
+import { useState } from 'react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
@@ -16,14 +10,26 @@ import { getMovie } from '#app/utils/tmdb.server.ts'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const movie = await getMovie(params.movieId!)
+	const alternateEndings = await prisma.alternateEnding.findMany({
+		select: {
+			id: true,
+			title: true,
+			content: true,
+			author: true,
+		},
+		where: {
+			tmdbMovieId: Number(params.movieId),
+		},
+	})
 
-	return json({ movie })
+	return json({ movie, alternateEndings })
 }
 
 export default function MovieRoute() {
 	const data = useLoaderData<typeof loader>()
 	const movie = data.movie
 	const navigate = useNavigate()
+	const [showEditor, setShowEditor] = useState(false)
 
 	return (
 		<div className="container mb-48 mt-4 flex flex-col items-center justify-center">
@@ -75,6 +81,19 @@ export default function MovieRoute() {
 					</div>
 				</div>
 			</div>
+
+			<div className="w-full max-w-3xl">
+				<h2 className="text-h3">Alternate Endings</h2>
+				{data.alternateEndings.map((ending) => (
+					<div key={ending.id} className="my-4 rounded-lg border p-4">
+						<h3 className="text-h4">{ending.title}</h3>
+						<p className="mb-3 italic">by {ending.author.username}</p>
+						<p>{ending.content}</p>
+					</div>
+				))}
+			</div>
+
+            
 		</div>
 	)
 }
