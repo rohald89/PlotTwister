@@ -38,6 +38,15 @@ const topRatedMoviesSchema = z.object({
 
 type TopRatedMoviesResponse = z.infer<typeof topRatedMoviesSchema>
 
+const popularMoviesSchema = z.object({
+  results: z.array(movieSchema),
+  total_pages: z.number(),
+  page: z.number(),
+  total_results: z.number(),
+})
+
+type PopularMoviesResponse = z.infer<typeof popularMoviesSchema>
+
 async function tmdbRequest<T>(endpoint: string): Promise<T> {
   const url = new URL(endpoint, TMDB_API_BASE_URL)
   url.searchParams.append('api_key', process.env.TMDB_API_KEY!)
@@ -79,6 +88,37 @@ export async function getTopRatedMovies(
     checkValue: topRatedMoviesSchema,
     ttl: 1000 * 60 * 60 * 24, // 24 hours
     staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days
+  })
+}
+
+export async function getPopularMovies(
+  page: number = 1,
+  { timings }: { timings?: Timings } = {}
+): Promise<PopularMoviesResponse> {
+  return cachified({
+    key: `tmdb:popular-movies:${page}`,
+    cache,
+    timings,
+    getFreshValue: () => tmdbRequest<PopularMoviesResponse>(`/3/movie/popular?page=${page}`),
+    checkValue: popularMoviesSchema,
+    ttl: 1000 * 60 * 60, // 1 hour
+    staleWhileRevalidate: 1000 * 60 * 60 * 24, // 24 hours
+  })
+}
+
+export async function searchMovies(
+  query: string,
+  page: number = 1,
+  { timings }: { timings?: Timings } = {}
+): Promise<PopularMoviesResponse> {
+  return cachified({
+    key: `tmdb:search-movies:${query}:${page}`,
+    cache,
+    timings,
+    getFreshValue: () => tmdbRequest<PopularMoviesResponse>(`/3/search/movie?query=${encodeURIComponent(query)}&page=${page}`),
+    checkValue: popularMoviesSchema,
+    ttl: 1000 * 60 * 60, // 1 hour
+    staleWhileRevalidate: 1000 * 60 * 60 * 24, // 24 hours
   })
 }
 
