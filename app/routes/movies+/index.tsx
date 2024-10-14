@@ -6,6 +6,8 @@ import {
 	Link,
 	useLoaderData,
 	useSearchParams,
+	useSubmit,
+	Form,
 } from '@remix-run/react'
 import { Suspense } from 'react'
 import { Button } from '#app/components/ui/button'
@@ -15,6 +17,11 @@ import {
 	getPopularMovies,
 	type Movie,
 } from '#app/utils/tmdb.server.ts'
+import { useId } from 'react'
+import { useDebounce, useIsPending } from '#app/utils/misc.tsx'
+import { Input } from '#app/components/ui/input.tsx'
+import { StatusButton } from '#app/components/ui/status-button.tsx'
+import { Icon } from '#app/components/ui/icon.tsx'
 
 export const meta: MetaFunction = () => [{ title: 'Movies' }]
 
@@ -47,15 +54,7 @@ export default function Movies() {
 				{searchQuery ? 'Search Results' : 'Popular Movies'}
 			</h1>
 
-			<form className="w-full max-w-sm">
-				<input
-					type="search"
-					name="q"
-					defaultValue={searchQuery || ''}
-					placeholder="Search movies..."
-					className="w-full rounded-md border border-gray-300 px-3 py-2"
-				/>
-			</form>
+			<MovieSearch />
 
 			<Suspense fallback={<div />}>
 				<Await resolve={movies}>
@@ -135,5 +134,47 @@ function Pagination({
 				<Button disabled>Next</Button>
 			)}
 		</div>
+	)
+}
+
+function MovieSearch() {
+	const id = useId()
+	const [searchParams] = useSearchParams()
+	const submit = useSubmit()
+	const isSubmitting = useIsPending({
+		formMethod: 'GET',
+		formAction: '/movies',
+	})
+
+	const handleFormChange = useDebounce((form: HTMLFormElement) => {
+		submit(form)
+	}, 400)
+
+	return (
+		<Form
+			method="GET"
+			action="/movies"
+			className="w-full max-w-sm"
+			onChange={(e) => handleFormChange(e.currentTarget)}
+		>
+			<div className="flex items-center gap-2">
+				<Input
+					type="search"
+					name="q"
+					id={id}
+					defaultValue={searchParams.get('q') ?? ''}
+					placeholder="Search movies..."
+					className="w-full"
+				/>
+				<StatusButton
+					type="submit"
+					status={isSubmitting ? 'pending' : 'idle'}
+					className="flex items-center justify-center"
+				>
+					<Icon name="magnifying-glass" size="sm" />
+					<span className="sr-only">Search</span>
+				</StatusButton>
+			</div>
+		</Form>
 	)
 }

@@ -194,10 +194,17 @@ function App() {
 	const user = useOptionalUser()
 	const theme = useTheme()
 	const matches = useMatches()
-	const isOnSearchPage = matches.find((m) => m.id === 'routes/users+/index')
+	// Routes that should not have the search bar in the header
+	const searchHiddenRoutes = [
+		'routes/users+/index',
+		'routes/movies+/index',
+		'root',
+	]
+	const isOnSearchPage = matches.find((m) => searchHiddenRoutes.includes(m.id))
 	const searchBar = isOnSearchPage ? null : <SearchBar status="idle" />
 	const allowIndexing = data.ENV.ALLOW_INDEXING !== 'false'
 	useToast(data.toast)
+	console.log(matches)
 
 	return (
 		<Document
@@ -213,7 +220,7 @@ function App() {
 						<div className="ml-auto hidden max-w-sm flex-1 sm:block">
 							{searchBar}
 						</div>
-						<div className="flex items-center gap-10">
+						<div className="flex items-center gap-4">
 							{user ? (
 								<UserDropdown />
 							) : (
@@ -221,6 +228,7 @@ function App() {
 									<Link to="/login">Log In</Link>
 								</Button>
 							)}
+							<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
 						</div>
 						<div className="block w-full sm:hidden">{searchBar}</div>
 					</nav>
@@ -232,7 +240,6 @@ function App() {
 
 				<div className="container flex justify-between pb-5">
 					<Logo />
-					<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
 				</div>
 			</div>
 			<EpicToaster closeButton position="top-center" theme={theme} />
