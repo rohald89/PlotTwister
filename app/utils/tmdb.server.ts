@@ -33,6 +33,36 @@ export const fullMovieSchema = baseMovieSchema.extend({
   })),
   credits: z.object({
     cast: z.array(castMemberSchema)
+  }),
+  videos: z.object({
+    results: z.array(z.object({
+      key: z.string(),
+      site: z.string(),
+      type: z.string(),
+    })),
+  }),
+  'watch/providers': z.object({
+    results: z.record(z.object({
+      link: z.string(),
+      flatrate: z.array(z.object({
+        logo_path: z.string(),
+        provider_id: z.number(),
+        provider_name: z.string(),
+        display_priority: z.number(),
+      })).optional(),
+      rent: z.array(z.object({
+        logo_path: z.string(),
+        provider_id: z.number(),
+        provider_name: z.string(),
+        display_priority: z.number(),
+      })).optional(),
+      buy: z.array(z.object({
+        logo_path: z.string(),
+        provider_id: z.number(),
+        provider_name: z.string(),
+        display_priority: z.number(),
+      })).optional(),
+    }).passthrough())
   })
 })
 
@@ -77,7 +107,7 @@ export async function getMovie(movieId: string, { timings }: { timings?: Timings
     key: `tmdb:movie:${movieId}`,
     cache,
     timings,
-    getFreshValue: () => tmdbRequest<FullMovie>(`/3/movie/${movieId}?append_to_response=credits`),
+    getFreshValue: () => tmdbRequest<FullMovie>(`/3/movie/${movieId}?append_to_response=credits,videos,watch/providers`),
     checkValue: fullMovieSchema,
     ttl: 1000 * 60 * 60 * 24, // 24 hours
     staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days

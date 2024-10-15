@@ -17,6 +17,7 @@ import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { useIsPending } from '#app/utils/misc.tsx'
 import { type action } from './__ending-editor.server'
 import { useState } from 'react'
+import { Icon } from '#app/components/ui/icon.js'
 
 const titleMinLength = 1
 const titleMaxLength = 100
@@ -69,6 +70,11 @@ export function AlternateEndingEditor({
 		prompt: string,
 		setTitle: React.Dispatch<React.SetStateAction<string>>,
 	) {
+		if (!prompt.trim()) {
+			setTitle('Please provide a prompt before generating.')
+			return
+		}
+
 		const url = `/resources/completions?${new URLSearchParams({
 			type: 'title',
 			movieTitle,
@@ -115,6 +121,11 @@ export function AlternateEndingEditor({
 		prompt: string,
 		setContent: React.Dispatch<React.SetStateAction<string>>,
 	) {
+		if (!prompt.trim()) {
+			setContent('Please provide a prompt before generating.')
+			return
+		}
+
 		const sse = new EventSource(
 			`/resources/completions?${new URLSearchParams({
 				type: 'content',
@@ -145,6 +156,7 @@ export function AlternateEndingEditor({
 					<input type="hidden" name="id" value={alternateEnding.id} />
 				) : null}
 				<input type="hidden" name="tmdbMovieId" value={tmdbMovieId} />
+
 				<Field
 					labelProps={{ children: 'Prompt' }}
 					inputProps={{
@@ -156,41 +168,50 @@ export function AlternateEndingEditor({
 					}}
 					errors={fields.prompt.errors}
 				/>
-				<Field
-					labelProps={{ children: 'Title' }}
-					inputProps={{
-						autoFocus: true,
-						...getInputProps(fields.title, { type: 'text' }),
-						value: title,
-						onChange: (e) => setTitle(e.target.value),
-					}}
-					errors={fields.title.errors}
-				/>
-				<Button
-					type="button"
-					variant="secondary"
-					size="pill"
-					onClick={() => generateTitle(movieTitle, prompt, setTitle)}
-				>
-					Generate Title
-				</Button>
-				<TextareaField
-					labelProps={{ children: 'Content' }}
-					textareaProps={{
-						...getTextareaProps(fields.content),
-						value: content,
-						onChange: (e) => setContent(e.target.value),
-					}}
-					errors={fields.content.errors}
-				/>
-				<Button
-					type="button"
-					variant="secondary"
-					size="pill"
-					onClick={() => generateContent(movieTitle, prompt, setContent)}
-				>
-					Generate Content
-				</Button>
+
+				<div className="relative">
+					<Field
+						labelProps={{ children: 'Title' }}
+						inputProps={{
+							...getInputProps(fields.title, { type: 'text' }),
+							value: title,
+							onChange: (e) => setTitle(e.target.value),
+						}}
+						errors={fields.title.errors}
+					/>
+					<Button
+						type="button"
+						variant="secondary"
+						size="sm"
+						className="absolute -top-4 right-0"
+						onClick={() => generateTitle(movieTitle, prompt, setTitle)}
+					>
+						<Icon name="sparkles"> Generate </Icon>
+					</Button>
+				</div>
+
+				<div className="relative">
+					<TextareaField
+						labelProps={{ children: 'Content' }}
+						textareaProps={{
+							...getTextareaProps(fields.content),
+							value: content,
+							onChange: (e) => setContent(e.target.value),
+							rows: 10,
+						}}
+						errors={fields.content.errors}
+					/>
+					<Button
+						type="button"
+						variant="secondary"
+						size="sm"
+						className="absolute -top-4 right-0"
+						onClick={() => generateContent(movieTitle, prompt, setContent)}
+					>
+						<Icon name="sparkles"> Generate </Icon>
+					</Button>
+				</div>
+
 				<ErrorList id={form.errorId} errors={form.errors} />
 				<div className="flex justify-end gap-4">
 					<Button
@@ -198,10 +219,9 @@ export function AlternateEndingEditor({
 						variant="destructive"
 						type="reset"
 						onClick={() => {
-							// because this is a controlled form, we need to reset the state
-							// because the built-in browser behavior will no longer work.
 							setContent(alternateEnding?.content ?? '')
 							setTitle(alternateEnding?.title ?? '')
+							setPrompt('')
 						}}
 					>
 						Reset

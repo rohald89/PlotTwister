@@ -33,6 +33,8 @@ import { AlternateEndingEditor } from './__ending-editor'
 import { useToast } from '#app/components/toaster'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { Toast } from '#app/utils/toast.server.js'
+import { MovieTrailerDialog } from '#app/components/movietrailer-dialog'
+import { WatchProvidersDialog } from '#app/components/watch-provider-dialog'
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
@@ -50,18 +52,33 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		},
 	})
 
-	return json({ movie, alternateEndings, isLiked: !!isLiked })
+	// Find the first trailer in the videos array
+	const trailer = movie.videos?.results.find(
+		(video) => video.type === 'Trailer' && video.site === 'YouTube',
+	)
+	console.log(movie)
+
+	return json({
+		movie,
+		alternateEndings,
+		isLiked: !!isLiked,
+		trailerKey: trailer?.key,
+	})
 }
 
 export { action } from './__ending-editor.server'
 
 export default function MovieRoute() {
-	const { movie, isLiked, alternateEndings } = useLoaderData<typeof loader>()
+	const { movie, isLiked, alternateEndings, trailerKey } =
+		useLoaderData<typeof loader>()
 	const likeFetcher = useFetcher()
 	const navigate = useNavigate()
 	const location = useLocation()
 	const [toast, setToast] = useState<Toast | null>(null)
 	useToast(toast)
+	const [isTrailerDialogOpen, setIsTrailerDialogOpen] = useState(false)
+	const [isWatchProvidersDialogOpen, setIsWatchProvidersDialogOpen] =
+		useState(false)
 
 	const handleLike = () => {
 		likeFetcher.submit(null, {
@@ -147,6 +164,15 @@ export default function MovieRoute() {
 									</p>
 								</div>
 							</div>
+							<Button
+								size="xl"
+								variant="outline"
+								className="rounded-full bg-muted px-12 py-8 text-xl"
+								onClick={() => setIsTrailerDialogOpen(true)}
+							>
+								<Icon name="play" className="mr-6" />
+								Watch Trailer
+							</Button>
 						</div>
 					</div>
 				</div>
@@ -175,10 +201,11 @@ export default function MovieRoute() {
 							<div className="flex gap-2">
 								<Button
 									size="xl"
-									variant="secondary"
-									className="rounded-full bg-indigo-600 px-12 py-8 text-xl"
+									variant="outline"
+									className="rounded-full px-12 py-8 text-xl"
+									onClick={() => setIsWatchProvidersDialogOpen(true)}
 								>
-									<Icon name="play" className="mr-6" />
+									<Icon name="tv" className="mr-6" />
 									Watch
 								</Button>
 								<Button
@@ -275,6 +302,21 @@ export default function MovieRoute() {
 					<h2 className="text-h6">More like this</h2>
 				</div>
 			</div>
+			{trailerKey && (
+				<MovieTrailerDialog
+					isOpen={isTrailerDialogOpen}
+					onClose={() => setIsTrailerDialogOpen(false)}
+					movieTitle={movie.title}
+					trailerKey={trailerKey}
+				/>
+			)}
+			<WatchProvidersDialog
+				isOpen={isWatchProvidersDialogOpen}
+				onClose={() => setIsWatchProvidersDialogOpen(false)}
+				movieTitle={movie.title}
+				watchProviders={movie['watch/providers']}
+				country="NL"
+			/>
 		</>
 	)
 }
