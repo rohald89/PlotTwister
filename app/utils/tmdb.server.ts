@@ -63,6 +63,9 @@ export const fullMovieSchema = baseMovieSchema.extend({
         display_priority: z.number(),
       })).optional(),
     }).passthrough())
+  }),
+  recommendations: z.object({
+    results: z.array(movieListItemSchema)
   })
 })
 
@@ -107,7 +110,7 @@ export async function getMovie(movieId: string, { timings }: { timings?: Timings
     key: `tmdb:movie:${movieId}`,
     cache,
     timings,
-    getFreshValue: () => tmdbRequest<FullMovie>(`/3/movie/${movieId}?append_to_response=credits,videos,watch/providers`),
+    getFreshValue: () => tmdbRequest<FullMovie>(`/3/movie/${movieId}?append_to_response=credits,videos,watch/providers,recommendations`),
     checkValue: fullMovieSchema,
     ttl: 1000 * 60 * 60 * 24, // 24 hours
     staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days

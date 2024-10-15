@@ -138,23 +138,7 @@ export default function MovieRoute() {
 						</Button>
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-4">
-								<div className="relative h-16 w-16">
-									<svg className="h-full w-full" viewBox="0 0 36 36">
-										<path
-											d="M18 2.0845
-										a 15.9155 15.9155 0 0 1 0 31.831
-										a 15.9155 15.9155 0 0 1 0 -31.831"
-											fill="none"
-											stroke="currentColor"
-											strokeWidth="3"
-											strokeDasharray={`${movie.vote_average * 10}, 100`}
-											className="stroke-primary"
-										/>
-									</svg>
-									<div className="absolute inset-0 flex items-center justify-center text-lg font-bold">
-										{movie.vote_average.toFixed(1)}
-									</div>
-								</div>
+								<MovieRating size="lg" vote_average={movie.vote_average} />
 								<div>
 									<p className="text-h6">
 										{formatVoteCount(movie.vote_count)} Votes
@@ -178,7 +162,7 @@ export default function MovieRoute() {
 				</div>
 			</div>
 
-			<div className="container flex gap-10 py-16 lg:px-24">
+			<div className="container flex gap-10 py-16 lg:pl-24">
 				<div className="flex flex-1 flex-col gap-10">
 					<div className="flex gap-10">
 						<img
@@ -282,7 +266,7 @@ export default function MovieRoute() {
 								{movie.credits?.cast.slice(0, 5).map((cast) => (
 									<div key={cast.id} className="flex items-center gap-4">
 										<img
-											className="aspect-square h-20 w-20 rounded-full object-cover"
+											className="aspect-square h-16 w-16 rounded-full object-cover"
 											src={`https://image.tmdb.org/t/p/w185${cast.profile_path}`}
 											alt={cast.name}
 										></img>
@@ -298,8 +282,41 @@ export default function MovieRoute() {
 						</div>
 					</div>
 				</div>
-				<div className="w-1/5 border-l-2 border-muted-foreground px-4">
-					<h2 className="text-h6">More like this</h2>
+				<div className="w-[27%] border-l-2 border-muted-foreground px-4">
+					<h2 className="mb-10 text-h6">More like this</h2>
+					<div className="flex flex-col gap-10 px-8">
+						{movie.recommendations?.results
+							.splice(0, 3)
+							.map((recommendation) => (
+								<div
+									className="flex items-center gap-6"
+									key={recommendation.id}
+								>
+									<img
+										className="object-cover"
+										src={`https://image.tmdb.org/t/p/w92${recommendation.poster_path}`}
+										alt={recommendation.title}
+									></img>
+									<div className="flex flex-col gap-5">
+										<p>{recommendation.title}</p>
+										<div className="flex items-center gap-3">
+											<MovieRating
+												size="sm"
+												vote_average={recommendation.vote_average}
+											/>
+											<div>
+												<p className="text-h6">
+													{getReleaseYear(recommendation.release_date)}
+												</p>
+												<p className="text-h6">
+													{formatVoteCount(recommendation.vote_count)}
+												</p>
+											</div>
+										</div>
+									</div>
+								</div>
+							))}
+					</div>
 				</div>
 			</div>
 			{trailerKey && (
@@ -318,6 +335,36 @@ export default function MovieRoute() {
 				country="NL"
 			/>
 		</>
+	)
+}
+
+function MovieRating({
+	vote_average,
+	size = 'md',
+}: {
+	vote_average: number
+	size: 'sm' | 'md' | 'lg'
+}) {
+	return (
+		<div
+			className={`relative h-${size === 'sm' ? '12' : size === 'md' ? '16' : '20'} w-${size === 'sm' ? '12' : size === 'md' ? '16' : '20'}`}
+		>
+			<svg className="h-full w-full" viewBox="0 0 36 36">
+				<path
+					d="M18 2.0845
+										a 15.9155 15.9155 0 0 1 0 31.831
+										a 15.9155 15.9155 0 0 1 0 -31.831"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="3"
+					strokeDasharray={`${vote_average * 10}, 100`}
+					className="stroke-primary"
+				/>
+			</svg>
+			<div className="absolute inset-0 flex items-center justify-center text-lg font-bold">
+				{vote_average.toFixed(1)}
+			</div>
+		</div>
 	)
 }
 
