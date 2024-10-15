@@ -193,15 +193,8 @@ function App() {
 	const nonce = useNonce()
 	const user = useOptionalUser()
 	const theme = useTheme()
-	const matches = useMatches()
 	// Routes that should not have the search bar in the header
-	const searchHiddenRoutes = [
-		'routes/users+/index',
-		'routes/movies+/index',
-		'root',
-	]
-	const isOnSearchPage = matches.find((m) => searchHiddenRoutes.includes(m.id))
-	const searchBar = isOnSearchPage ? null : <SearchBar status="idle" />
+
 	const allowIndexing = data.ENV.ALLOW_INDEXING !== 'false'
 	useToast(data.toast)
 
@@ -212,34 +205,32 @@ function App() {
 			allowIndexing={allowIndexing}
 			env={data.ENV}
 		>
-			<div className="flex h-screen flex-col justify-between">
-				<header className="container py-6">
-					<nav className="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap md:gap-8">
+			<div className="flex h-screen flex-col sm:flex-row">
+				<header className="border-r px-3 py-6">
+					<nav className="flex h-full justify-between gap-4 sm:flex-col">
 						<Logo />
-						<div className="ml-auto hidden max-w-sm flex-1 sm:block">
-							{searchBar}
-						</div>
-						<div className="flex items-center gap-4">
+						<div className="flex items-center gap-4 sm:flex-col">
 							{user ? (
 								<UserDropdown />
 							) : (
-								<Button asChild variant="default" size="lg">
-									<Link to="/login">Log In</Link>
+								<Button asChild variant="default" size="sm">
+									<Link to="/login">
+										<Icon className="text-body-md" name="avatar"></Icon>
+									</Link>
 								</Button>
 							)}
 							<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
 						</div>
-						<div className="block w-full sm:hidden">{searchBar}</div>
 					</nav>
 				</header>
 
-				<div className="flex-1">
+				<div className="flex-1 overflow-auto">
 					<Outlet />
 				</div>
 
-				<div className="container flex justify-between pb-5">
+				{/* <div className="container flex justify-between pb-5">
 					<Logo />
-				</div>
+				</div> */}
 			</div>
 			<EpicToaster closeButton position="top-center" theme={theme} />
 			<EpicProgress />
@@ -249,7 +240,7 @@ function App() {
 
 function Logo() {
 	return (
-		<Link to="/" className="group grid leading-snug">
+		<Link to="/movies" className="group grid leading-snug">
 			<span className="font-light transition group-hover:-translate-x-1">
 				Plot
 			</span>
@@ -290,9 +281,9 @@ function UserDropdown() {
 							alt={user.name ?? user.username}
 							src={getUserImgSrc(user.image?.id)}
 						/>
-						<span className="text-body-sm font-bold">
+						{/* <span className="text-body-sm font-bold">
 							{user.name ?? user.username}
-						</span>
+						</span> */}
 					</Link>
 				</Button>
 			</DropdownMenuTrigger>
@@ -305,13 +296,13 @@ function UserDropdown() {
 							</Icon>
 						</Link>
 					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
+					{/* <DropdownMenuItem asChild>
 						<Link prefetch="intent" to={`/users/${user.username}/notes`}>
 							<Icon className="text-body-md" name="pencil-2">
 								Notes
 							</Icon>
 						</Link>
-					</DropdownMenuItem>
+					</DropdownMenuItem> */}
 					<DropdownMenuItem
 						asChild
 						// this prevents the menu from closing before the form submission is completed
