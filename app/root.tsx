@@ -191,9 +191,12 @@ function Document({
 function App() {
 	const data = useLoaderData<typeof loader>()
 	const nonce = useNonce()
-	const user = useOptionalUser()
 	const theme = useTheme()
-	// Routes that should not have the search bar in the header
+	const matches = useMatches()
+
+	const isMoviesRoute = matches.some((match) =>
+		match.id.startsWith('routes/movies'),
+	)
 
 	const allowIndexing = data.ENV.ALLOW_INDEXING !== 'false'
 	useToast(data.toast)
@@ -205,29 +208,15 @@ function App() {
 			allowIndexing={allowIndexing}
 			env={data.ENV}
 		>
-			<div className="flex h-screen flex-col sm:flex-row">
-				<header className="border-r px-3 py-6">
-					<nav className="flex h-full justify-between gap-4 sm:flex-col">
-						<Logo />
-						<div className="flex items-center gap-4 sm:flex-col">
-							{user ? (
-								<UserDropdown />
-							) : (
-								<Button asChild variant="default" size="sm">
-									<Link to="/login">
-										<Icon className="text-body-md" name="avatar"></Icon>
-									</Link>
-								</Button>
-							)}
-							<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
-						</div>
-					</nav>
-				</header>
-
-				<div className="flex-1 overflow-auto">
+			{isMoviesRoute ? (
+				<SidebarLayout>
 					<Outlet />
-				</div>
-			</div>
+				</SidebarLayout>
+			) : (
+				<StackedLayout>
+					<Outlet />
+				</StackedLayout>
+			)}
 			<EpicToaster closeButton position="top-center" theme={theme} />
 			<EpicProgress />
 		</Document>
@@ -316,6 +305,77 @@ function UserDropdown() {
 				</DropdownMenuContent>
 			</DropdownMenuPortal>
 		</DropdownMenu>
+	)
+}
+
+export function SidebarLayout({ children }: { children: React.ReactNode }) {
+	const user = useOptionalUser()
+	const data = useLoaderData<typeof loader>()
+	return (
+		<div className="flex h-screen flex-col sm:flex-row">
+			<header className="border-r px-3 py-6">
+				<nav className="flex h-full justify-between gap-4 sm:flex-col">
+					<Logo />
+					<div className="flex items-center gap-4 sm:flex-col">
+						{user ? (
+							<UserDropdown />
+						) : (
+							<Button asChild variant="default" size="sm">
+								<Link to="/login">
+									<Icon className="text-body-md" name="avatar"></Icon>
+								</Link>
+							</Button>
+						)}
+						<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
+					</div>
+				</nav>
+			</header>
+
+			<div className="flex-1 overflow-auto">{children}</div>
+		</div>
+	)
+}
+
+export function StackedLayout({ children }: { children: React.ReactNode }) {
+	const matches = useMatches()
+	// Routes that should not have the search bar in the header
+	const searchHiddenRoutes = [
+		'routes/users+/index',
+		'routes/movies+/index',
+		'root',
+	]
+	const isOnSearchPage = matches.find((m) => searchHiddenRoutes.includes(m.id))
+	const searchBar = isOnSearchPage ? null : <SearchBar status="idle" />
+	const data = useLoaderData<typeof loader>()
+	const user = useOptionalUser()
+	return (
+		<div className="flex h-screen flex-col justify-between">
+			<header className="container py-6">
+				<nav className="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap md:gap-8">
+					<Logo />
+					<div className="ml-auto hidden max-w-sm flex-1 sm:block">
+						{searchBar}
+					</div>
+					<div className="flex items-center gap-4">
+						{user ? (
+							<UserDropdown />
+						) : (
+							<Button asChild variant="default" size="lg">
+								<Link to="/login">Log In</Link>
+							</Button>
+						)}
+						<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
+					</div>
+					<div className="block w-full sm:hidden">{searchBar}</div>
+				</nav>
+			</header>
+
+			<div className="flex-1">{children}</div>
+
+			<div className="container flex justify-between pb-5">
+				<Logo />
+			</div>
+		</div>
 	)
 }
 
