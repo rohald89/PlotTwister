@@ -20,7 +20,7 @@ import {
 	searchMovies,
 	getPopularMovies,
 	getTopRatedMovies,
-	type Movie,
+	type MovieListItem,
 } from '#app/utils/tmdb.server.ts'
 import {
 	DropdownMenu,
@@ -88,7 +88,7 @@ export default function Movies() {
 									'grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
 								)}
 							>
-								{(movies.results as Movie[]).map((movie) => (
+								{(movies.results as MovieListItem[]).map((movie) => (
 									<li key={movie.id} className="w-full">
 										<Link
 											to={`/movies/${movie.id}`}

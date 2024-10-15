@@ -12,7 +12,7 @@ const castMemberSchema = z.object({
     profile_path: z.string().nullable(),
 })
 
-export const movieSchema = z.object({
+const baseMovieSchema = z.object({
   id: z.number(),
   title: z.string(),
   overview: z.string(),
@@ -20,26 +20,36 @@ export const movieSchema = z.object({
   poster_path: z.string().nullable(),
   release_date: z.string(),
   vote_average: z.number(),
-  // Made optional as these will not be returned on top rated query
-  runtime: z.number().optional(),
+  vote_count: z.number(),
+})
+
+export const movieListItemSchema = baseMovieSchema
+
+export const fullMovieSchema = baseMovieSchema.extend({
+  runtime: z.number(),
+  genres: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+  })),
   credits: z.object({
     cast: z.array(castMemberSchema)
-  }).optional()
-  // Add other properties as needed
+  })
 })
 
-export type Movie = z.infer<typeof movieSchema>
+export type MovieListItem = z.infer<typeof movieListItemSchema>
+export type FullMovie = z.infer<typeof fullMovieSchema>
 
-const topRatedMoviesSchema = z.object({
-  results: z.array(movieSchema),
+const movieListSchema = z.object({
+  results: z.array(movieListItemSchema),
   total_pages: z.number(),
-  // Add other properties as needed
+  page: z.number(),
+  total_results: z.number(),
 })
 
-type TopRatedMoviesResponse = z.infer<typeof topRatedMoviesSchema>
+type MovieListResponse = z.infer<typeof movieListSchema>
 
 const popularMoviesSchema = z.object({
-  results: z.array(movieSchema),
+  results: z.array(movieListItemSchema),
   total_pages: z.number(),
   page: z.number(),
   total_results: z.number(),
@@ -62,13 +72,13 @@ async function tmdbRequest<T>(endpoint: string): Promise<T> {
   return response.json() as T
 }
 
-export async function getMovie(movieId: string, { timings }: { timings?: Timings } = {}): Promise<Movie> {
+export async function getMovie(movieId: string, { timings }: { timings?: Timings } = {}): Promise<FullMovie> {
   const movie = await cachified({
     key: `tmdb:movie:${movieId}`,
     cache,
     timings,
-    getFreshValue: () => tmdbRequest<Movie>(`/3/movie/${movieId}?append_to_response=credits`),
-    checkValue: movieSchema,
+    getFreshValue: () => tmdbRequest<FullMovie>(`/3/movie/${movieId}?append_to_response=credits`),
+    checkValue: fullMovieSchema,
     ttl: 1000 * 60 * 60 * 24, // 24 hours
     staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days
   })
@@ -79,13 +89,13 @@ export async function getMovie(movieId: string, { timings }: { timings?: Timings
 export async function getTopRatedMovies(
   page: number = 1,
   { timings }: { timings?: Timings } = {}
-): Promise<TopRatedMoviesResponse> {
+): Promise<MovieListResponse> {
   return cachified({
     key: `tmdb:top-rated-movies:${page}`,
     cache,
     timings,
-    getFreshValue: () => tmdbRequest<TopRatedMoviesResponse>(`/3/movie/top_rated?page=${page}`),
-    checkValue: topRatedMoviesSchema,
+    getFreshValue: () => tmdbRequest<MovieListResponse>(`/3/movie/top_rated?page=${page}`),
+    checkValue: movieListSchema,
     ttl: 1000 * 60 * 60 * 24, // 24 hours
     staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days
   })

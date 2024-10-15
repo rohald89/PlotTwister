@@ -2,10 +2,14 @@ import { json, type LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData, useNavigate, type MetaFunction } from '@remix-run/react'
 import { useState, useRef } from 'react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
-import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
+import {
+	formatRuntime,
+	formatVoteCount,
+	getReleaseYear,
+} from '#app/utils/misc.js'
 import { getMovie } from '#app/utils/tmdb.server.ts'
 import { AlternateEndingEditor } from './__ending-editor'
 
@@ -74,7 +78,9 @@ export default function MovieRoute() {
 									</div>
 								</div>
 								<div>
-									<p className="text-h6">35.7K Votes</p>
+									<p className="text-h6">
+										{formatVoteCount(movie.vote_count)} Votes
+									</p>
 									<p className="text-body-xs opacity-80">
 										Our Users Are Recommending This Movie
 									</p>
@@ -96,15 +102,14 @@ export default function MovieRoute() {
 						<div className="flex flex-col justify-between gap-4">
 							<h1 className="text-h2">{movie.title}</h1>
 							<div className="flex gap-2 text-foreground opacity-60">
-								<p className="rounded-full px-6 py-2 text-white outline outline-1 outline-foreground">
-									action
-								</p>
-								<p className="rounded-full px-6 py-2 text-white outline outline-1 outline-foreground">
-									adventure
-								</p>
-								<p className="rounded-full px-6 py-2 text-white outline outline-1 outline-foreground">
-									sci-fi
-								</p>
+								{movie.genres.map((genre) => (
+									<p
+										key={genre.id}
+										className="rounded-full px-6 py-2 text-white outline outline-1 outline-foreground"
+									>
+										{genre.name}
+									</p>
+								))}
 							</div>
 							<div className="flex gap-2">
 								<Button
@@ -112,7 +117,7 @@ export default function MovieRoute() {
 									variant="secondary"
 									className="rounded-full bg-indigo-600 px-12 py-8 text-xl"
 								>
-									<Icon name="arrow-right" className="mr-6" />
+									<Icon name="play" className="mr-6" />
 									Watch
 								</Button>
 								<Button
@@ -120,14 +125,21 @@ export default function MovieRoute() {
 									variant="outline"
 									className="rounded-full px-6 py-8 text-xl"
 								>
-									❤️
+									<Icon name="heart" />
 								</Button>
 								<Button
 									size="xl"
 									variant="outline"
 									className="rounded-full px-6 py-8 text-xl"
 								>
-									🔗
+									<Icon name="share" />
+								</Button>
+								<Button
+									size="xl"
+									variant="outline"
+									className="rounded-full px-6 py-8 text-xl"
+								>
+									<Icon name="dots-horizontal" />
 								</Button>
 							</div>
 						</div>
@@ -135,8 +147,8 @@ export default function MovieRoute() {
 
 					<div className="flex gap-10">
 						<div className="w-32 uppercase">
-							<p className="text-h6">2021</p>
-							<p className="text-h6">2h 47min</p>
+							<p className="text-h6">{getReleaseYear(movie.release_date)}</p>
+							<p className="text-h6">{formatRuntime(movie.runtime)}</p>
 							<p className="text-h6">PG13</p>
 						</div>
 						<div className="flex-1">

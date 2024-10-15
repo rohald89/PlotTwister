@@ -288,3 +288,21 @@ export async function downloadFile(url: string, retries: number = 0) {
 		return downloadFile(url, retries + 1)
 	}
 }
+
+export function formatVoteCount(num: number) {
+	if (num > 1000) {
+		return (num / 1000).toFixed(1) + 'K'
+	} else {
+		return num.toString()
+	}
+}
+
+export function formatRuntime(runtime: number) {
+	const hours = Math.floor(runtime / 60)
+	const minutes = runtime % 60
+	return `${hours}h ${minutes}min`
+}
+
+export function getReleaseYear(date: string) {
+	return date.split('-')[0]
+}
