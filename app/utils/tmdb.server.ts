@@ -12,6 +12,27 @@ const castMemberSchema = z.object({
     profile_path: z.string().nullable(),
 })
 
+const personSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    profile_path: z.string().nullable(),
+    biography: z.string().nullable(),
+    birthday: z.string().nullable(),
+    deathday: z.string().nullable(),
+    movie_credits: z.object({
+        cast: z.array(z.object({
+            id: z.number(),
+            title: z.string(),
+            character: z.string(),
+            release_date: z.string(),
+            poster_path: z.string().nullable(),
+            vote_average: z.number(),
+            vote_count: z.number(),
+            popularity: z.number(),
+        }))
+    })
+})
+
 const baseMovieSchema = z.object({
   id: z.number(),
   title: z.string(),
@@ -71,6 +92,7 @@ export const fullMovieSchema = baseMovieSchema.extend({
 
 export type MovieListItem = z.infer<typeof movieListItemSchema>
 export type FullMovie = z.infer<typeof fullMovieSchema>
+export type Person = z.infer<typeof personSchema>
 
 const movieListSchema = z.object({
   results: z.array(movieListItemSchema),
@@ -103,6 +125,21 @@ async function tmdbRequest<T>(endpoint: string): Promise<T> {
   }
 
   return response.json() as T
+}
+
+export async function getPerson(personId: string, { timings }: { timings?: Timings } = {}): Promise<Person> {
+  const person = await cachified({
+    key: `tmdb:person:${personId}`,
+    cache,
+    timings,
+    getFreshValue: () => tmdbRequest<Person>(`/3/person/${personId}?append_to_response=movie_credits`),
+    checkValue: personSchema,
+    ttl: 1000 * 60 * 60 * 24, // 24 hours
+    staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days
+  })
+  console.log(person)
+  invariantResponse(person, 'Person not found', { status: 404 })
+  return person
 }
 
 export async function getMovie(movieId: string, { timings }: { timings?: Timings } = {}): Promise<FullMovie> {

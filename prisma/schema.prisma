@@ -27,19 +27,23 @@ model User {
   connections Connection[]
   alternateEndings AlternateEnding[]
   movieLikes MovieLike[]
+  votes Vote[]
 }
 
 model AlternateEnding {
-    id String @id @default(cuid())
-    title String
-    content String
-    tmdbMovieId Int
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  tmdbMovieId Int
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-    author User @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    authorId String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  authorId    String
+
+  votes       Vote[]
+  score       Int      @default(0)
 }
 
 model Note {
@@ -194,4 +198,15 @@ model MovieLike {
   @@unique([userId, tmdbMovieId])
   @@index([userId])
   @@index([tmdbMovieId])
+}
+
+model Vote {
+  id                String          @id @default(cuid())
+  value             Int             // 1 for upvote, -1 for downvote
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  alternateEnding   AlternateEnding @relation(fields: [alternateEndingId], references: [id], onDelete: Cascade)
+  alternateEndingId String
+
+  @@unique([userId, alternateEndingId])
 }

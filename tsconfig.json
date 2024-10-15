@@ -1,5 +1,11 @@
 {
-	"include": ["**/*.ts", "**/*.tsx"],
+	"include": [
+		"app/**/*.ts",
+		"app/**/*.tsx"
+	],
+	"exclude": [
+		"node_modules"
+	],
 	"extends": ["@epic-web/config/typescript"],
 	"compilerOptions": {
 		"paths": {

@@ -60,7 +60,14 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	const movie = await getMovie(params.movieId!)
 	const alternateEndings = await prisma.alternateEnding.findMany({
 		where: { tmdbMovieId: Number(params.movieId) },
-		include: { author: { select: { username: true } } },
+		include: {
+			author: { select: { username: true } },
+			votes: {
+				where: { userId },
+				select: { value: true },
+			},
+		},
+		orderBy: { score: 'desc' },
 	})
 	const isLiked = await prisma.movieLike.findUnique({
 		where: {
@@ -75,7 +82,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	const trailer = movie.videos?.results.find(
 		(video) => video.type === 'Trailer' && video.site === 'YouTube',
 	)
-	console.log(movie)
 
 	return json({
 		movie,
@@ -86,6 +92,44 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 }
 
 export { action } from './__ending-editor.server'
+
+function VoteButtons({
+	alternateEnding,
+	userVote,
+}: {
+	alternateEnding: any
+	userVote: number
+}) {
+	const voteFetcher = useFetcher()
+
+	const handleVote = (value: number) => {
+		voteFetcher.submit(
+			{ voteValue: value },
+			{
+				method: 'post',
+				action: `/api/alternate-endings/${alternateEnding.id}/vote`,
+			},
+		)
+	}
+
+	return (
+		<div className="flex items-center space-x-2">
+			<button
+				onClick={() => handleVote(1)}
+				className={`p-1 ${userVote === 1 ? 'text-green-500' : ''}`}
+			>
+				<Icon name="arrow-up" />
+			</button>
+			<span>{alternateEnding.score}</span>
+			<button
+				onClick={() => handleVote(-1)}
+				className={`p-1 ${userVote === -1 ? 'text-red-500' : ''}`}
+			>
+				<Icon name="arrow-down" />
+			</button>
+		</div>
+	)
+}
 
 export default function MovieRoute() {
 	const { movie, isLiked, alternateEndings, trailerKey } =
@@ -100,9 +144,6 @@ export default function MovieRoute() {
 	const [isWatchProvidersDialogOpen, setIsWatchProvidersDialogOpen] =
 		useState(false)
 	const [activeTab, setActiveTab] = useState('story')
-
-	const [showEditor, setShowEditor] = useState(false)
-	const editorRef = useRef<HTMLDivElement>(null)
 
 	const handleShare = () => {
 		const currentUrl = `${window.location.origin}${location.pathname}`
@@ -125,6 +166,32 @@ export default function MovieRoute() {
 			},
 		)
 	}
+
+	const renderAlternateEndings = () => (
+		<div className="flex flex-col gap-4">
+			<Accordion type="single" collapsible>
+				{alternateEndings.map((ending) => (
+					<AccordionItem key={ending.id} value={ending.id}>
+						<AccordionTrigger>
+							<div className="flex w-full items-center justify-between">
+								{ending.title}
+							</div>
+						</AccordionTrigger>
+						<AccordionContent>
+							<p>{ending.content}</p>
+							<p className="mt-2 text-sm text-gray-500">
+								by {ending.author.username}
+							</p>
+							<VoteButtons
+								alternateEnding={ending}
+								userVote={ending.votes[0]?.value}
+							/>
+						</AccordionContent>
+					</AccordionItem>
+				))}
+			</Accordion>
+		</div>
+	)
 
 	return (
 		<>
@@ -255,23 +322,7 @@ export default function MovieRoute() {
 								<TabsContent value="story">{movie.overview}</TabsContent>
 								<TabsContent value="alternate">
 									{alternateEndings.length > 0 ? (
-										<div className="flex flex-col gap-4">
-											<Accordion type="single" collapsible>
-												{alternateEndings.map((ending) => (
-													<AccordionItem key={ending.id} value={ending.id}>
-														<AccordionTrigger>
-															<>
-																{ending.title}
-																<i>by {ending.author.username}</i>
-															</>
-														</AccordionTrigger>
-														<AccordionContent>
-															{ending.content}
-														</AccordionContent>
-													</AccordionItem>
-												))}
-											</Accordion>
-										</div>
+										renderAlternateEndings()
 									) : (
 										<div className="flex flex-col items-center justify-center py-8">
 											<p className="text-center text-muted-foreground">
