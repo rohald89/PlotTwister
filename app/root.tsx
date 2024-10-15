@@ -216,6 +216,7 @@ function App() {
 								<Button asChild variant="default" size="sm">
 									<Link to="/login">
 										<Icon className="text-body-md" name="avatar"></Icon>
+										Log In
 									</Link>
 								</Button>
 							)}
@@ -281,9 +282,9 @@ function UserDropdown() {
 							alt={user.name ?? user.username}
 							src={getUserImgSrc(user.image?.id)}
 						/>
-						{/* <span className="text-body-sm font-bold">
+						<span className="text-body-sm font-bold">
 							{user.name ?? user.username}
-						</span> */}
+						</span>
 					</Link>
 				</Button>
 			</DropdownMenuTrigger>
