@@ -184,7 +184,7 @@ export default function MovieRoute() {
 							</p>
 							<VoteButtons
 								alternateEnding={ending}
-								userVote={ending.votes[0]?.value}
+								userVote={ending.votes[0]?.value || 0}
 							/>
 						</AccordionContent>
 					</AccordionItem>
