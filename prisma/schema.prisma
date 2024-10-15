@@ -26,6 +26,7 @@ model User {
   sessions    Session[]
   connections Connection[]
   alternateEndings AlternateEnding[]
+  movieLikes MovieLike[]
 }
 
 model AlternateEnding {
@@ -180,4 +181,17 @@ model Connection {
   userId String
 
   @@unique([providerName, providerId])
+}
+
+model MovieLike {
+  id        String   @id @default(cuid())
+  tmdbMovieId Int
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  @@unique([userId, tmdbMovieId])
+  @@index([userId])
+  @@index([tmdbMovieId])
 }

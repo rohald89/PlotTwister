@@ -1,5 +1,11 @@
 import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import { useLoaderData, useNavigate, type MetaFunction } from '@remix-run/react'
+import {
+	useLoaderData,
+	useNavigate,
+	type MetaFunction,
+	useLocation,
+	useFetcher,
+} from '@remix-run/react'
 import { useState, useRef } from 'react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import {
@@ -24,33 +30,74 @@ import {
 } from '#app/utils/misc.js'
 import { getMovie } from '#app/utils/tmdb.server.ts'
 import { AlternateEndingEditor } from './__ending-editor'
+import { useToast } from '#app/components/toaster'
+import { requireUserId } from '#app/utils/auth.server.ts'
+import { Toast } from '#app/utils/toast.server.js'
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
+	const userId = await requireUserId(request)
 	const movie = await getMovie(params.movieId!)
-	console.log(movie)
 	const alternateEndings = await prisma.alternateEnding.findMany({
-		select: {
-			id: true,
-			title: true,
-			content: true,
-			author: true,
-		},
+		where: { tmdbMovieId: Number(params.movieId) },
+		include: { author: { select: { username: true } } },
+	})
+	const isLiked = await prisma.movieLike.findUnique({
 		where: {
-			tmdbMovieId: Number(params.movieId),
+			userId_tmdbMovieId: {
+				userId,
+				tmdbMovieId: Number(params.movieId),
+			},
 		},
 	})
 
-	return json({ movie, alternateEndings })
+	return json({ movie, alternateEndings, isLiked: !!isLiked })
 }
 
 export { action } from './__ending-editor.server'
 
 export default function MovieRoute() {
-	const data = useLoaderData<typeof loader>()
-	const movie = data.movie
+	const { movie, isLiked, alternateEndings } = useLoaderData<typeof loader>()
+	const likeFetcher = useFetcher()
 	const navigate = useNavigate()
+	const location = useLocation()
+	const [toast, setToast] = useState<Toast | null>(null)
+	useToast(toast)
+
+	const handleLike = () => {
+		likeFetcher.submit(null, {
+			method: 'post',
+			action: `/api/movies/${movie.id}/like`,
+		})
+	}
+
+	const liked = likeFetcher.formData
+		? likeFetcher.formData.get('liked') === 'true'
+		: isLiked
+
 	const [showEditor, setShowEditor] = useState(false)
 	const editorRef = useRef<HTMLDivElement>(null)
+
+	const handleShare = () => {
+		const currentUrl = `${window.location.origin}${location.pathname}`
+		navigator.clipboard.writeText(currentUrl).then(
+			() => {
+				setToast({
+					id: 'share-success',
+					title: 'URL Copied!',
+					description: 'The movie link has been copied to your clipboard.',
+					type: 'success',
+				})
+			},
+			() => {
+				setToast({
+					id: 'share-error',
+					title: 'Copy Failed',
+					description: 'Failed to copy the URL. Please try again.',
+					type: 'error',
+				})
+			},
+		)
+	}
 
 	return (
 		<>
@@ -58,6 +105,8 @@ export default function MovieRoute() {
 				className="flex h-[480px] flex-col rounded-b-3xl bg-muted bg-cover bg-center"
 				style={{
 					backgroundImage: `url(https://image.tmdb.org/t/p/w780${movie.backdrop_path})`,
+					backgroundSize: 'cover',
+					backgroundPosition: 'center',
 				}}
 			>
 				<div className="relative h-full w-full bg-backdrop-gradient-light dark:bg-backdrop-gradient-dark">
@@ -135,14 +184,18 @@ export default function MovieRoute() {
 								<Button
 									size="xl"
 									variant="outline"
-									className="rounded-full px-6 py-8 text-xl"
+									className={`rounded-full px-6 py-8 text-xl outline-none ring-0 focus-within:ring-0 focus-visible:ring-0 ${
+										liked ? 'border-red-500 text-red-500' : ''
+									}`}
+									onClick={handleLike}
 								>
-									<Icon name="heart" />
+									<Icon name={liked ? 'heart-filled' : 'heart'} />
 								</Button>
 								<Button
 									size="xl"
 									variant="outline"
 									className="rounded-full px-6 py-8 text-xl"
+									onClick={handleShare}
 								>
 									<Icon name="share" />
 								</Button>
@@ -174,7 +227,7 @@ export default function MovieRoute() {
 								<TabsContent value="alternate">
 									<div className="flex flex-col gap-4">
 										<Accordion type="single" collapsible>
-											{data.alternateEndings.map((ending) => (
+											{alternateEndings.map((ending) => (
 												<AccordionItem key={ending.id} value={ending.id}>
 													<AccordionTrigger>
 														<>
