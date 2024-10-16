@@ -7,7 +7,7 @@ import {
 	useFetcher,
 	Link,
 } from '@remix-run/react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import {
 	Accordion,
@@ -146,6 +146,11 @@ export default function MovieRoute() {
 		useState(false)
 	const [activeTab, setActiveTab] = useState('story')
 
+	const recommendationString = useMemo(
+		() => getRecommendationString(movie.vote_average),
+		[movie.vote_average],
+	)
+
 	const handleShare = () => {
 		const currentUrl = `${window.location.origin}${location.pathname}`
 		navigator.clipboard.writeText(currentUrl).then(
@@ -222,7 +227,7 @@ export default function MovieRoute() {
 										{formatVoteCount(movie.vote_count)} Votes
 									</p>
 									<p className="text-body-xs opacity-80">
-										{getRecommendationString(movie.vote_average)}
+										{recommendationString}
 									</p>
 								</div>
 							</div>
