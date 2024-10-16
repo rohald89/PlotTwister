@@ -7,8 +7,10 @@ import {
 	useFetcher,
 	Link,
 } from '@remix-run/react'
-import { useState, useRef, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { MovieTrailerDialog } from '#app/components/movietrailer-dialog'
+import { useToast } from '#app/components/toaster'
 import {
 	Accordion,
 	AccordionContent,
@@ -17,100 +19,59 @@ import {
 } from '#app/components/ui/accordion'
 import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
+import { ScrollArea, ScrollBar } from '#app/components/ui/scroll-area.js'
 import {
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
 } from '#app/components/ui/tabs.js'
+import { WatchProvidersDialog } from '#app/components/watch-provider-dialog'
+import { getUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import {
-	cn,
 	formatRuntime,
 	formatVoteCount,
 	getRecommendationString,
 	getReleaseYear,
 } from '#app/utils/misc.js'
-import { getMovie, MovieListItem } from '#app/utils/tmdb.server.ts'
+import { getMovie, type MovieListItem } from '#app/utils/tmdb.server.ts'
+import { type Toast } from '#app/utils/toast.server.js'
 import { AlternateEndingEditor } from './__ending-editor'
-import { useToast } from '#app/components/toaster'
-import { requireUserId } from '#app/utils/auth.server.ts'
-import { Toast } from '#app/utils/toast.server.js'
-import { MovieTrailerDialog } from '#app/components/movietrailer-dialog'
-import { WatchProvidersDialog } from '#app/components/watch-provider-dialog'
-import { ScrollArea, ScrollBar } from '#app/components/ui/scroll-area.js'
-import { cva } from 'class-variance-authority'
-
-// Define the size variants using cva
-const ratingSize = cva('relative', {
-	variants: {
-		size: {
-			sm: 'h-8 w-8 md:h-12 md:w-12',
-			md: 'h-12 w-12 md:h-16 md:w-16',
-			lg: 'h-16 w-16 md:h-20 md:w-20',
-		},
-	},
-	defaultVariants: {
-		size: 'md',
-	},
-})
-
-const ratingText = cva(
-	'absolute inset-0 flex items-center justify-center font-bold',
-	{
-		variants: {
-			size: {
-				sm: 'text-xs md:text-sm',
-				md: 'text-sm md:text-base',
-				lg: 'text-base md:text-lg',
-			},
-		},
-		defaultVariants: {
-			size: 'md',
-		},
-	},
-)
-
-function useLike(initialLiked: boolean) {
-	const likeFetcher = useFetcher()
-	const liked = likeFetcher.formData
-		? likeFetcher.formData.get('liked') === 'true'
-		: initialLiked
-
-	const handleLike = (movieId: number) => {
-		likeFetcher.submit(null, {
-			method: 'post',
-			action: `/api/movies/${movieId}/like`,
-		})
-	}
-
-	return { liked, handleLike }
-}
+import { MovieRating } from './__movie-rating'
+import { VoteButtons } from './__vote-buttons'
+export { action } from './__ending-editor.server'
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-	const userId = await requireUserId(request)
+	const userId = await getUserId(request)
 	const movie = await getMovie(params.movieId!)
 	const alternateEndings = await prisma.alternateEnding.findMany({
 		where: { tmdbMovieId: Number(params.movieId) },
 		include: {
 			author: { select: { username: true } },
-			votes: {
-				where: { userId },
-				select: { value: true },
-			},
+			votes: userId
+				? {
+						where: { userId },
+						select: { value: true },
+					}
+				: false,
 		},
 		orderBy: { score: 'desc' },
 	})
-	const isLiked = await prisma.movieLike.findUnique({
-		where: {
-			userId_tmdbMovieId: {
-				userId,
-				tmdbMovieId: Number(params.movieId),
-			},
-		},
-	})
 
-	// Find the first trailer in the videos array
+	let isLiked = false
+	if (userId) {
+		const like = await prisma.movieLike.findUnique({
+			where: {
+				userId_tmdbMovieId: {
+					userId,
+					tmdbMovieId: Number(params.movieId),
+				},
+			},
+		})
+		isLiked = !!like
+	}
+
 	const trailer = movie.videos?.results.find(
 		(video) => video.type === 'Trailer' && video.site === 'YouTube',
 	)
@@ -118,49 +79,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	return json({
 		movie,
 		alternateEndings,
-		isLiked: !!isLiked,
+		isLiked,
 		trailerKey: trailer?.key,
+		isAuthenticated: !!userId,
 	})
-}
-
-export { action } from './__ending-editor.server'
-
-function VoteButtons({
-	alternateEnding,
-	userVote,
-}: {
-	alternateEnding: any
-	userVote: number
-}) {
-	const voteFetcher = useFetcher()
-
-	const handleVote = (value: number) => {
-		voteFetcher.submit(
-			{ voteValue: value },
-			{
-				method: 'post',
-				action: `/api/alternate-endings/${alternateEnding.id}/vote`,
-			},
-		)
-	}
-
-	return (
-		<div className="flex items-center space-x-2">
-			<button
-				onClick={() => handleVote(1)}
-				className={`p-1 ${userVote === 1 ? 'text-green-500' : ''}`}
-			>
-				<Icon name="arrow-up" />
-			</button>
-			<span>{alternateEnding.score}</span>
-			<button
-				onClick={() => handleVote(-1)}
-				className={`p-1 ${userVote === -1 ? 'text-red-500' : ''}`}
-			>
-				<Icon name="arrow-down" />
-			</button>
-		</div>
-	)
 }
 
 export default function MovieRoute() {
@@ -204,32 +126,6 @@ export default function MovieRoute() {
 		)
 	}
 
-	const renderAlternateEndings = () => (
-		<div className="flex flex-col gap-4">
-			<Accordion type="single" collapsible>
-				{alternateEndings.map((ending) => (
-					<AccordionItem key={ending.id} value={ending.id}>
-						<AccordionTrigger>
-							<div className="flex w-full items-center justify-between">
-								{ending.title}
-							</div>
-						</AccordionTrigger>
-						<AccordionContent>
-							<p>{ending.content}</p>
-							<p className="mt-2 text-sm text-gray-500">
-								by {ending.author.username}
-							</p>
-							<VoteButtons
-								alternateEnding={ending}
-								userVote={ending.votes[0]?.value || 0}
-							/>
-						</AccordionContent>
-					</AccordionItem>
-				))}
-			</Accordion>
-		</div>
-	)
-
 	return (
 		<>
 			<div
@@ -252,7 +148,7 @@ export default function MovieRoute() {
 						</Button>
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-4">
-								<MovieRating size="lg" vote_average={movie.vote_average} />
+								<MovieRating vote_average={movie.vote_average} size="lg" />
 								<div>
 									<p className="text-h6">
 										{formatVoteCount(movie.vote_count)} Votes
@@ -358,8 +254,8 @@ export default function MovieRoute() {
 								</TabsList>
 								<TabsContent value="story">{movie.overview}</TabsContent>
 								<TabsContent value="alternate">
-									{alternateEndings.length > 0 ? (
-										renderAlternateEndings()
+									{alternateEndings.length ? (
+										<AlternateEndings />
 									) : (
 										<div className="flex flex-col items-center justify-center py-8">
 											<p className="text-center text-muted-foreground">
@@ -438,6 +334,35 @@ export default function MovieRoute() {
 	)
 }
 
+function AlternateEndings() {
+	const { alternateEndings } = useLoaderData<typeof loader>()
+	return (
+		<div className="flex flex-col gap-4">
+			<Accordion type="single" collapsible>
+				{alternateEndings.map((ending) => (
+					<AccordionItem key={ending.id} value={ending.id}>
+						<AccordionTrigger>
+							<div className="flex w-full items-center justify-between">
+								{ending.title}
+							</div>
+						</AccordionTrigger>
+						<AccordionContent>
+							<p>{ending.content}</p>
+							<p className="mt-2 text-sm text-gray-500">
+								by {ending.author.username}
+							</p>
+							<VoteButtons
+								alternateEnding={ending}
+								userVote={ending.votes[0]?.value || 0}
+							/>
+						</AccordionContent>
+					</AccordionItem>
+				))}
+			</Accordion>
+		</div>
+	)
+}
+
 function MovieRecommendations({
 	recommendations,
 }: {
@@ -485,30 +410,20 @@ function MovieRecommendations({
 	)
 }
 
-function MovieRating({
-	vote_average,
-	size = 'md',
-}: {
-	vote_average: number
-	size?: 'sm' | 'md' | 'lg'
-}) {
-	return (
-		<div className={ratingSize({ size })}>
-			<svg className="h-full w-full" viewBox="0 0 36 36">
-				<path
-					d="M18 2.0845
-										a 15.9155 15.9155 0 0 1 0 31.831
-										a 15.9155 15.9155 0 0 1 0 -31.831"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="3"
-					strokeDasharray={`${vote_average * 10}, 100`}
-					className="stroke-primary"
-				/>
-			</svg>
-			<div className={ratingText({ size })}>{vote_average.toFixed(1)}</div>
-		</div>
-	)
+function useLike(initialLiked: boolean) {
+	const likeFetcher = useFetcher()
+	const liked = likeFetcher.formData
+		? likeFetcher.formData.get('liked') === 'true'
+		: initialLiked
+
+	const handleLike = (movieId: number) => {
+		likeFetcher.submit(null, {
+			method: 'post',
+			action: `/api/movies/${movieId}/like`,
+		})
+	}
+
+	return { liked, handleLike }
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
