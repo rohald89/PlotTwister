@@ -38,7 +38,38 @@ import { requireUserId } from '#app/utils/auth.server.ts'
 import { Toast } from '#app/utils/toast.server.js'
 import { MovieTrailerDialog } from '#app/components/movietrailer-dialog'
 import { WatchProvidersDialog } from '#app/components/watch-provider-dialog'
-import { ScrollArea } from '#app/components/ui/scroll-area.js'
+import { ScrollArea, ScrollBar } from '#app/components/ui/scroll-area.js'
+import { cva } from 'class-variance-authority'
+
+// Define the size variants using cva
+const ratingSize = cva('relative', {
+	variants: {
+		size: {
+			sm: 'h-8 w-8 md:h-12 md:w-12',
+			md: 'h-12 w-12 md:h-16 md:w-16',
+			lg: 'h-16 w-16 md:h-20 md:w-20',
+		},
+	},
+	defaultVariants: {
+		size: 'md',
+	},
+})
+
+const ratingText = cva(
+	'absolute inset-0 flex items-center justify-center font-bold',
+	{
+		variants: {
+			size: {
+				sm: 'text-xs md:text-sm',
+				md: 'text-sm md:text-base',
+				lg: 'text-base md:text-lg',
+			},
+		},
+		defaultVariants: {
+			size: 'md',
+		},
+	},
+)
 
 function useLike(initialLiked: boolean) {
 	const likeFetcher = useFetcher()
@@ -202,7 +233,7 @@ export default function MovieRoute() {
 	return (
 		<>
 			<div
-				className="flex h-[480px] flex-col rounded-b-3xl bg-muted bg-cover bg-center"
+				className="relative flex h-[480px] flex-col rounded-b-3xl bg-muted bg-cover bg-center"
 				style={{
 					backgroundImage: `url(https://image.tmdb.org/t/p/w780${movie.backdrop_path})`,
 					backgroundSize: 'cover',
@@ -226,7 +257,7 @@ export default function MovieRoute() {
 									<p className="text-h6">
 										{formatVoteCount(movie.vote_count)} Votes
 									</p>
-									<p className="text-body-xs opacity-80">
+									<p className="text-body-xm max-w-xs opacity-80 lg:max-w-md">
 										{recommendationString}
 									</p>
 								</div>
@@ -234,7 +265,7 @@ export default function MovieRoute() {
 							<Button
 								size="xl"
 								variant="outline"
-								className="rounded-full border-none bg-transparent px-12 py-8 text-xl ring-2 ring-primary ring-offset-0"
+								className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-none bg-transparent px-12 py-8 text-xl ring-2 ring-primary ring-offset-0 lg:static lg:translate-x-0 lg:translate-y-0"
 								onClick={() => setIsTrailerDialogOpen(true)}
 							>
 								<Icon name="play" className="mr-6" />
@@ -245,7 +276,7 @@ export default function MovieRoute() {
 				</div>
 			</div>
 
-			<div className="container flex gap-10 py-16 lg:pl-24">
+			<div className="container flex flex-col gap-10 py-16 lg:pl-24 2xl:flex-row">
 				<div className="flex flex-1 flex-col gap-10">
 					<div className="flex gap-10">
 						<img
@@ -304,7 +335,7 @@ export default function MovieRoute() {
 						</div>
 					</div>
 
-					<div className="flex gap-10">
+					<div className="flex flex-wrap gap-10">
 						<div className="w-32 space-y-2 uppercase">
 							<p className="text-h4 font-thin">
 								{getReleaseYear(movie.release_date)}
@@ -355,15 +386,16 @@ export default function MovieRoute() {
 								</TabsContent>
 							</Tabs>
 						</div>
-						<div className="w-1/4">
+						<div className="w-full lg:w-1/4">
 							<h2 className="mb-4 text-h6">Cast</h2>
-							<div className="flex flex-col gap-4">
-								<ScrollArea className="h-64">
+
+							<ScrollArea className="w-full lg:h-96">
+								<div className="flex w-max space-x-10 p-4 lg:flex-col lg:space-x-0 lg:space-y-6">
 									{movie.credits?.cast.map((cast) => (
 										<Link
 											to={`/people/${cast.id}`}
 											key={cast.id}
-											className="flex items-center gap-4 [&:not(:first-of-type)]:mt-4"
+											className="flex max-w-60 items-center gap-4 [&:not(:first-of-type)]:mt-4"
 										>
 											<img
 												className="aspect-square h-16 w-16 rounded-full object-cover"
@@ -378,8 +410,9 @@ export default function MovieRoute() {
 											</div>
 										</Link>
 									))}
-								</ScrollArea>
-							</div>
+								</div>
+								<ScrollBar orientation="horizontal" />
+							</ScrollArea>
 						</div>
 					</div>
 				</div>
@@ -411,39 +444,42 @@ function MovieRecommendations({
 	recommendations: MovieListItem[]
 }) {
 	return (
-		<div className="w-[27%] border-l-2 border-muted-foreground px-4">
+		<div className="container w-full pl-0 2xl:w-[27%] 2xl:border-l-2 2xl:border-muted-foreground 2xl:px-8">
 			<h2 className="mb-10 text-h6">More like this</h2>
-			<ScrollArea className="h-[500px] px-8">
-				{recommendations.map((recommendation) => (
-					<Link
-						to={`/movies/${recommendation.id}`}
-						className="flex items-center gap-6 [&:not(:first-of-type)]:mt-8"
-						key={recommendation.id}
-					>
-						<img
-							className="object-cover"
-							src={`https://image.tmdb.org/t/p/w92${recommendation.poster_path}`}
-							alt={recommendation.title}
-						></img>
-						<div className="flex flex-col gap-5">
-							<p>{recommendation.title}</p>
-							<div className="flex items-center gap-3">
-								<MovieRating
-									size="sm"
-									vote_average={recommendation.vote_average}
-								/>
-								<div>
-									<p className="text-h6">
-										{getReleaseYear(recommendation.release_date)}
-									</p>
-									<p className="text-h6">
-										{formatVoteCount(recommendation.vote_count)}
-									</p>
+			<ScrollArea className="w-full 2xl:h-[600px]">
+				<div className="flex w-max space-x-10 p-4 2xl:w-full 2xl:flex-col 2xl:space-x-0 2xl:space-y-8">
+					{recommendations.map((recommendation) => (
+						<Link
+							to={`/movies/${recommendation.id}`}
+							className="flex items-center gap-6"
+							key={recommendation.id}
+						>
+							<img
+								className="object-cover"
+								src={`https://image.tmdb.org/t/p/w92${recommendation.poster_path}`}
+								alt={recommendation.title}
+							></img>
+							<div className="flex flex-col gap-5">
+								<p>{recommendation.title}</p>
+								<div className="flex items-center gap-3">
+									<MovieRating
+										size="sm"
+										vote_average={recommendation.vote_average}
+									/>
+									<div>
+										<p className="text-h6">
+											{getReleaseYear(recommendation.release_date)}
+										</p>
+										<p className="text-h6">
+											{formatVoteCount(recommendation.vote_count)}
+										</p>
+									</div>
 								</div>
 							</div>
-						</div>
-					</Link>
-				))}
+						</Link>
+					))}
+				</div>
+				<ScrollBar orientation="horizontal" />
 			</ScrollArea>
 		</div>
 	)
@@ -454,12 +490,10 @@ function MovieRating({
 	size = 'md',
 }: {
 	vote_average: number
-	size: 'sm' | 'md' | 'lg'
+	size?: 'sm' | 'md' | 'lg'
 }) {
 	return (
-		<div
-			className={`relative h-${size === 'sm' ? '12' : size === 'md' ? '16' : '20'} w-${size === 'sm' ? '12' : size === 'md' ? '16' : '20'}`}
-		>
+		<div className={ratingSize({ size })}>
 			<svg className="h-full w-full" viewBox="0 0 36 36">
 				<path
 					d="M18 2.0845
@@ -472,14 +506,7 @@ function MovieRating({
 					className="stroke-primary"
 				/>
 			</svg>
-			<div
-				className={cn(
-					'absolute inset-0 flex items-center justify-center font-bold',
-					size === 'sm' ? 'text-h6' : size === 'md' ? 'text-h5' : 'text-h4',
-				)}
-			>
-				{vote_average.toFixed(1)}
-			</div>
+			<div className={ratingText({ size })}>{vote_average.toFixed(1)}</div>
 		</div>
 	)
 }
