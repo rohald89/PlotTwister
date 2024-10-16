@@ -31,22 +31,18 @@ export default function Index() {
 						<FeatureCard
 							title="Discover & Explore"
 							description="Dive into a vast library of films from every era and genre"
-							icon="search"
 						/>
 						<FeatureCard
 							title="Rewrite Endings"
 							description="Craft and share your own alternate endings to beloved movies"
-							icon="pen-tool"
 						/>
 						<FeatureCard
 							title="Connect & Engage"
 							description="Join a community of film enthusiasts and creative minds"
-							icon="users"
 						/>
 						<FeatureCard
 							title="Vote & Rank"
 							description="Influence the popularity of alternate endings with your votes"
-							icon="thumbs-up"
 						/>
 					</div>
 				</section>
@@ -92,15 +88,12 @@ export default function Index() {
 function FeatureCard({
 	title,
 	description,
-	icon,
 }: {
 	title: string
 	description: string
-	icon: string
 }) {
 	return (
 		<div className="rounded-lg border border-primary/20 bg-card p-6 shadow-sm transition-all hover:shadow-md">
-			<Icon name={icon} className="mb-4 h-8 w-8 text-primary" />
 			<h3 className="mb-2 text-xl font-semibold text-primary">{title}</h3>
 			<p className="text-muted-foreground">{description}</p>
 		</div>
