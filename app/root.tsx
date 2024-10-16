@@ -372,8 +372,10 @@ export function StackedLayout({ children }: { children: React.ReactNode }) {
 
 			<div className="flex-1">{children}</div>
 
-			<div className="container flex justify-between pb-5">
+			<div className="container flex justify-between pb-5 text-muted-foreground">
 				<Logo />
+
+				<p>&copy; 2024 PlotTwisters. All rights reserved.</p>
 			</div>
 		</div>
 	)

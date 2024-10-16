@@ -28,6 +28,7 @@ import {
 	cn,
 	formatRuntime,
 	formatVoteCount,
+	getRecommendationString,
 	getReleaseYear,
 } from '#app/utils/misc.js'
 import { getMovie, MovieListItem } from '#app/utils/tmdb.server.ts'
@@ -221,7 +222,7 @@ export default function MovieRoute() {
 										{formatVoteCount(movie.vote_count)} Votes
 									</p>
 									<p className="text-body-xs opacity-80">
-										Our Users Are Recommending This Movie
+										{getRecommendationString(movie.vote_average)}
 									</p>
 								</div>
 							</div>

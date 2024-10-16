@@ -296,6 +296,66 @@ export function formatVoteCount(num: number) {
 		return num.toString()
 	}
 }
+// ... existing imports and functions
+
+const recommendationPhrases = {
+	high: [
+		'Caution: This cinematic masterpiece may cause your expectations for all future movies to skyrocket unreasonably.',
+		"Warning: Watching this movie might make you question why you've wasted time on lesser films.",
+		'Alert: This film is so good, it might ruin other movies for you. Proceed with caution.',
+		"Heads up: This movie is like pizza - even when it's not perfect, it's still pretty great.",
+		'PSA: This film is a certified banger. Your eyeballs will thank you.',
+	],
+	good: [
+		"If movies were desserts, this one's a respectable tiramisu. Not everyone's fave, but crowd-pleasing!",
+		'This movie is like a Swiss Army knife - not always pretty, but gets the job done.',
+		"Think of this film as the 'comfort food' of cinema. It might not win awards, but it'll make you feel good.",
+		'This movie is like a good hair day - not life-changing, but definitely makes things better.',
+		"If this film were a person, it'd be the friend who always remembers your birthday. Reliable and appreciated.",
+	],
+	average: [
+		"It's the 'pizza with pineapple' of movies - controversial, but has its fans!",
+		'This film is like a Monday - not terrible, but not exactly exciting either.',
+		'If this movie were a spice, it would be flour. Present, necessary, but not particularly thrilling.',
+		'This film is the equivalent of a participation trophy in the movie world.',
+		"Watching this movie is like eating a rice cake - it's fine, but you know there are tastier options out there.",
+	],
+	below_average: [
+		"Watch it for the 'I survived this movie' bragging rights!",
+		'This film is like a bad haircut - not permanent, but you might want to hide for a while after experiencing it.',
+		"If this movie were a food, it would be plain oatmeal. Edible, but you'll probably want to add something to make it interesting.",
+		"This film is the cinematic equivalent of lukewarm coffee. It exists, but it's not bringing joy to anyone.",
+		'Watching this movie is like doing laundry - not fun, but you might feel accomplished after for some reason.',
+	],
+	low: [
+		"Yikes! You'd have more fun watching paint dry.",
+		"This movie is so bad, it might circle back to good... Nope, never mind, it's just bad.",
+		'If this film were a person, it would be that one who always tells the same unfunny joke at parties.',
+		"Watching this movie is like stepping on a Lego brick - painful and you'll question why you put yourself through it.",
+		'This film is the cinematic equivalent of a soggy sandwich. Disappointing and leaves you wondering where it all went wrong.',
+	],
+} as const
+
+type RecommendationCategory = keyof typeof recommendationPhrases
+
+export function getRecommendationString(rating: number): string {
+	let category: RecommendationCategory
+	if (rating >= 8) {
+		category = 'high'
+	} else if (rating >= 7) {
+		category = 'good'
+	} else if (rating >= 6) {
+		category = 'average'
+	} else if (rating >= 5) {
+		category = 'below_average'
+	} else {
+		category = 'low'
+	}
+
+	const phrases = recommendationPhrases[category]
+	const randomIndex = Math.floor(Math.random() * phrases.length)
+	return phrases[randomIndex] || "We don't know what people think of this movie"
+}
 
 export function formatRuntime(runtime: number) {
 	const hours = Math.floor(runtime / 60)
