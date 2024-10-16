@@ -1,54 +1,75 @@
 <div align="center">
-  <h1 align="center"><a href="https://www.epicweb.dev/epic-stack">The Epic Stack 🚀</a></h1>
+  <h1 align="center">PlotTwisters</h1>
   <strong align="center">
-    Ditch analysis paralysis and start shipping Epic Web apps.
+    Explore movies, create alternate endings, and engage with a community of film enthusiasts.
   </strong>
   <p>
-    This is an opinionated project starter and reference that allows teams to
-    ship their ideas to production faster and on a more stable foundation based
-    on the experience of <a href="https://kentcdodds.com">Kent C. Dodds</a> and
-    <a href="https://github.com/epicweb-dev/epic-stack/graphs/contributors">contributors</a>.
+    PlotTwisters is a web application that allows users to discover movies, view details about films and actors, and create and share alternate endings for their favorite movies.
   </p>
 </div>
 
-```sh
-npx create-epic-app@latest
-```
+## Features
 
-[![The Epic Stack](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/246885449-1b00286c-aa3d-44b2-9ef2-04f694eb3592.png)](https://www.epicweb.dev/epic-stack)
+- **Movie Discovery**: Browse and search for movies using data from TMDB.
+- **Detailed Movie Information**: View comprehensive details about movies, including cast, crew, and watch providers.
+- **Person Profiles**: Explore detailed information about actors, directors, and other film industry professionals.
+- **Alternate Endings**: Create, read, and vote on user-generated alternate endings for movies.
+- **User Interactions**: Like movies, upvote/downvote alternate endings, and share movie pages.
 
-[The Epic Stack](https://www.epicweb.dev/epic-stack)
+## Getting Started
 
-<hr />
+To get started with PlotTwisters, follow these steps:
 
-## Watch Kent's Introduction to The Epic Stack
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/plottwisters.git
+   ```
 
-[![Epic Stack Talk slide showing Flynn Rider with knives, the text "I've been around and I've got opinions" and Kent speaking in the corner](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/277818553-47158e68-4efc-43ae-a477-9d1670d4217d.png)](https://www.epicweb.dev/talks/the-epic-stack)
+2. Install dependencies:
+   ```
+   cd plottwisters
+   npm install
+   ```
 
-["The Epic Stack" by Kent C. Dodds](https://www.epicweb.dev/talks/the-epic-stack)
+3. Set up environment variables:
+   Create a `.env` file in the root directory and add the following:
+   ```
+   TMDB_API_KEY=your_tmdb_api_key
+   DATABASE_URL=your_database_url
+   ```
 
-## Docs
+4. Run the development server:
+   ```
+   npm run dev
+   ```
 
-[Read the docs](https://github.com/epicweb-dev/epic-stack/blob/main/docs)
-(please 🙏).
+5. Open your browser and navigate to `http://localhost:3000`.
 
-## Support
+## Technologies Used
 
-- 🆘 Join the
-  [discussion on GitHub](https://github.com/epicweb-dev/epic-stack/discussions)
-  and the [KCD Community on Discord](https://kcd.im/discord).
-- 💡 Create an
-  [idea discussion](https://github.com/epicweb-dev/epic-stack/discussions/new?category=ideas)
-  for suggestions.
-- 🐛 Open a [GitHub issue](https://github.com/epicweb-dev/epic-stack/issues) to
-  report a bug.
+- [Remix](https://remix.run/): A full stack web framework
+- [React](https://reactjs.org/): A JavaScript library for building user interfaces
+- [TypeScript](https://www.typescriptlang.org/): A typed superset of JavaScript
+- [Prisma](https://www.prisma.io/): Next-generation ORM for Node.js and TypeScript
+- [Tailwind CSS](https://tailwindcss.com/): A utility-first CSS framework
 
-## Branding
+## Contributing
 
-Want to talk about the Epic Stack in a blog post or talk? Great! Here are some
-assets you can use in your material:
-[EpicWeb.dev/brand](https://epicweb.dev/brand)
+We welcome contributions to PlotTwisters! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-## Thanks
+## License
 
-You rock 🪨
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [The Movie Database (TMDB)](https://www.themoviedb.org/) for providing the movie data API
+- [Epic Stack](https://github.com/epicweb-dev/epic-stack) for providing the initial project structure and best practices
+
+## Contact
+
+If you have any questions or feedback, please open an issue on this repository or contact the maintainers directly.
+
+---
+
+Happy movie exploring and plot twisting! 🎥🌟
