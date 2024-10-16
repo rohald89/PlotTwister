@@ -3,11 +3,15 @@ import { type SerializeFrom } from '@remix-run/node'
 import { useFetcher } from '@remix-run/react'
 import { Icon } from '#app/components/ui/icon.tsx'
 
+type SerializedAlternateEnding = SerializeFrom<AlternateEnding> & {
+	votes?: { value: number }[]
+}
+
 export function VoteButtons({
 	alternateEnding,
 	userVote,
 }: {
-	alternateEnding: SerializeFrom<AlternateEnding>
+	alternateEnding: SerializedAlternateEnding
 	userVote: number
 }) {
 	const voteFetcher = useFetcher()

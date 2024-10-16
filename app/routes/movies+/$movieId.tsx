@@ -282,34 +282,7 @@ export default function MovieRoute() {
 								</TabsContent>
 							</Tabs>
 						</div>
-						<div className="w-full lg:w-1/4">
-							<h2 className="mb-4 text-h6">Cast</h2>
-
-							<ScrollArea className="w-full lg:h-96">
-								<div className="flex w-max space-x-10 p-4 lg:flex-col lg:space-x-0 lg:space-y-6">
-									{movie.credits?.cast.map((cast) => (
-										<Link
-											to={`/people/${cast.id}`}
-											key={cast.id}
-											className="flex max-w-60 items-center gap-4 [&:not(:first-of-type)]:mt-4"
-										>
-											<img
-												className="aspect-square h-16 w-16 rounded-full object-cover"
-												src={`https://image.tmdb.org/t/p/w92${cast.profile_path}`}
-												alt={cast.name}
-											></img>
-											<div>
-												<p>{cast.name}</p>
-												<p className="text-body-xs opacity-60">
-													{cast.character}
-												</p>
-											</div>
-										</Link>
-									))}
-								</div>
-								<ScrollBar orientation="horizontal" />
-							</ScrollArea>
-						</div>
+						<Cast />
 					</div>
 				</div>
 
@@ -353,12 +326,44 @@ function AlternateEndings() {
 							</p>
 							<VoteButtons
 								alternateEnding={ending}
-								userVote={ending.votes[0]?.value || 0}
+								userVote={ending.votes?.[0]?.value ?? 0}
 							/>
 						</AccordionContent>
 					</AccordionItem>
 				))}
 			</Accordion>
+		</div>
+	)
+}
+
+function Cast() {
+	const { movie } = useLoaderData<typeof loader>()
+	return (
+		<div className="w-full lg:w-1/4">
+			<h2 className="mb-4 text-h6">Cast</h2>
+
+			<ScrollArea className="w-full lg:h-96">
+				<div className="flex w-max space-x-10 p-4 lg:flex-col lg:space-x-0 lg:space-y-6">
+					{movie.credits.cast.map((member) => (
+						<Link
+							to={`/people/${member.id}`}
+							key={member.id}
+							className="flex max-w-60 items-center gap-4 [&:not(:first-of-type)]:mt-4"
+						>
+							<img
+								className="aspect-square h-16 w-16 rounded-full object-cover"
+								src={`https://image.tmdb.org/t/p/w92${member.profile_path}`}
+								alt={member.name}
+							></img>
+							<div>
+								<p>{member.name}</p>
+								<p className="text-body-xs opacity-60">{member.character}</p>
+							</div>
+						</Link>
+					))}
+				</div>
+				<ScrollBar orientation="horizontal" />
+			</ScrollArea>
 		</div>
 	)
 }
