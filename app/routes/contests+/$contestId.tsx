@@ -103,7 +103,7 @@ export default function ContestDetailsPage() {
 										</p>
 										<VoteButtons
 											alternateEnding={entry.alternateEnding}
-											userVote={entry.alternateEnding.votes[0]?.value}
+											userVote={entry.alternateEnding.votes[0]?.value || 0}
 										/>
 									</li>
 								))}
