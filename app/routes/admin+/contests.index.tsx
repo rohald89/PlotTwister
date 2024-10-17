@@ -1,8 +1,19 @@
-import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import { useLoaderData, Link } from '@remix-run/react'
+import {
+	json,
+	type LoaderFunctionArgs,
+	type ActionFunctionArgs,
+} from '@remix-run/node'
+import { useLoaderData, Link, useFetcher } from '@remix-run/react'
 import React from 'react'
 import { prisma } from '#app/utils/db.server.ts'
 import { requireUserWithRole } from '#app/utils/permissions.server.ts'
+import { Button } from '#app/components/ui/button.tsx'
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuItem,
+} from '#app/components/ui/dropdown-menu.tsx'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
@@ -12,8 +23,27 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	return json({ contests })
 }
 
+export async function action({ request }: ActionFunctionArgs) {
+	await requireUserWithRole(request, 'admin')
+	const formData = await request.formData()
+	const contestId = formData.get('contestId') as string
+	const status = formData.get('status') as string
+
+	await prisma.contest.update({
+		where: { id: contestId },
+		data: { status },
+	})
+
+	return json({ success: true })
+}
+
 export default function AdminContests() {
 	const { contests } = useLoaderData<typeof loader>()
+	const fetcher = useFetcher()
+
+	const handleStatusChange = (contestId: string, newStatus: string) => {
+		fetcher.submit({ contestId, status: newStatus }, { method: 'POST' })
+	}
 
 	return (
 		<div className="container mx-auto p-4">
@@ -35,11 +65,35 @@ export default function AdminContests() {
 				<tbody>
 					{contests.map((contest) => (
 						<tr key={contest.id}>
-							<td>{contest.title}</td>
+							<td>
+								<Link to={contest.id} className="text-blue-600 hover:underline">
+									{contest.title}
+								</Link>
+							</td>
 							<td>{contest.theme}</td>
 							<td>{new Date(contest.startDate).toLocaleDateString()}</td>
 							<td>{new Date(contest.endDate).toLocaleDateString()}</td>
-							<td>{contest.status}</td>
+							<td>
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button variant="outline">{contest.status}</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent>
+										{['UPCOMING', 'ACTIVE', 'VOTING', 'COMPLETED'].map(
+											(status) => (
+												<DropdownMenuItem
+													key={status}
+													onSelect={() =>
+														handleStatusChange(contest.id, status)
+													}
+												>
+													{status}
+												</DropdownMenuItem>
+											),
+										)}
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</td>
 							<td>
 								<Link
 									to={`${contest.id}/edit`}
@@ -47,12 +101,15 @@ export default function AdminContests() {
 								>
 									Edit
 								</Link>
-								<Link
-									to={`${contest.id}/delete`}
-									className="btn btn-sm btn-error"
+								<Button
+									variant="destructive"
+									size="sm"
+									onClick={() => {
+										/* Implement delete functionality */
+									}}
 								>
 									Delete
-								</Link>
+								</Button>
 							</td>
 						</tr>
 					))}

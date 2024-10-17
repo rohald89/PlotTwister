@@ -193,9 +193,10 @@ function App() {
 	const nonce = useNonce()
 	const theme = useTheme()
 	const matches = useMatches()
+	const sidebarRoutes = ['routes/movies', 'routes/contests']
 
-	const isMoviesRoute = matches.some((match) =>
-		match.id.startsWith('routes/movies'),
+	const isSidebarRoute = matches.some((match) =>
+		sidebarRoutes.some((route) => match.id.startsWith(route)),
 	)
 
 	const allowIndexing = data.ENV.ALLOW_INDEXING !== 'false'
@@ -208,7 +209,7 @@ function App() {
 			allowIndexing={allowIndexing}
 			env={data.ENV}
 		>
-			{isMoviesRoute ? (
+			{isSidebarRoute ? (
 				<SidebarLayout>
 					<Outlet />
 				</SidebarLayout>
@@ -316,6 +317,18 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
 			<header className="border-r px-3 py-6">
 				<nav className="flex h-full justify-between gap-4 sm:flex-col">
 					<Logo />
+					<div className="flex flex-col gap-4">
+						<Button variant="secondary" asChild>
+							<Link to="/movies">
+								<Icon className="text-body-md" name="movies"></Icon>
+							</Link>
+						</Button>
+						<Button variant="secondary" asChild>
+							<Link to="/contests">
+								<Icon className="text-body-md" name="challenge"></Icon>
+							</Link>
+						</Button>
+					</div>
 					<div className="flex items-center gap-4 sm:flex-col">
 						{user ? (
 							<UserDropdown />
