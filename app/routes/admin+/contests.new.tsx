@@ -13,8 +13,10 @@ import { DatePicker } from '#app/components/ui/date-picker'
 
 const ContestSchema = z.object({
 	title: z.string().min(1, 'Title is required'),
+	tagline: z.string().min(1, 'Tagline is required'),
 	description: z.string().min(1, 'Description is required'),
 	theme: z.string().min(1, 'Theme is required'),
+	backgroundImage: z.string().url('Must be a valid URL').optional(),
 	startDate: z.string().min(1, 'Start date is required'),
 	endDate: z.string().min(1, 'End date is required'),
 	votingEndDate: z.string().min(1, 'Voting end date is required'),
@@ -29,14 +31,16 @@ export async function action({ request }: ActionFunctionArgs) {
 		return json({ status: 'error', submission } as const, { status: 400 })
 	}
 
-	const { title, description, theme, startDate, endDate, votingEndDate } =
+	const { title, tagline, description, theme, backgroundImage, startDate, endDate, votingEndDate } =
 		submission.value
 
 	const contest = await prisma.contest.create({
 		data: {
 			title,
+			tagline,
 			description,
 			theme,
+			backgroundImage,
 			startDate: new Date(startDate),
 			endDate: new Date(endDate),
 			votingEndDate: new Date(votingEndDate),
@@ -68,6 +72,15 @@ export default function NewContest() {
 					}}
 					errors={actionData?.submission?.error?.title}
 				/>
+				<Field
+					labelProps={{ children: 'Tagline' }}
+					inputProps={{
+						name: 'tagline',
+						type: 'text',
+						required: true,
+					}}
+					errors={actionData?.submission?.error?.tagline}
+				/>
 				<TextareaField
 					labelProps={{ children: 'Description' }}
 					textareaProps={{
@@ -84,6 +97,15 @@ export default function NewContest() {
 						required: true,
 					}}
 					errors={actionData?.submission?.error?.theme}
+				/>
+				<Field
+					labelProps={{ children: 'Background Image URL' }}
+					inputProps={{
+						name: 'backgroundImage',
+						type: 'url',
+						placeholder: 'https://example.com/image.jpg',
+					}}
+					errors={actionData?.submission?.error?.backgroundImage}
 				/>
 				<div>
 					<label htmlFor="startDate">Start Date</label>

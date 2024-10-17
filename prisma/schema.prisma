@@ -215,20 +215,22 @@ model Vote {
 }
 
 model Contest {
-  id            String   @id @default(cuid())
-  title         String
-  description   String
-  theme         String
-  startDate     DateTime
-  endDate       DateTime
-  votingEndDate DateTime
-  status        String   @default("UPCOMING") // Changed from enum to string
-  entries       ContestEntry[]
+  id              String   @id @default(cuid())
+  title           String
+  tagline         String
+  description     String
+  theme           String
+  backgroundImage String?
+  startDate       DateTime
+  endDate         DateTime
+  votingEndDate   DateTime
+  status          String   @default("UPCOMING")
+  entries         ContestEntry[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  movies     ContestMovie[]
+  movies          ContestMovie[]
 }
 
 model ContestMovie {
