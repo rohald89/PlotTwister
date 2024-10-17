@@ -258,7 +258,6 @@ function UserDropdown() {
 				<Button asChild variant="secondary">
 					<Link
 						to={`/users/${user.username}`}
-						// this is for progressive enhancement
 						onClick={(e) => e.preventDefault()}
 						className="flex items-center gap-2"
 					>
