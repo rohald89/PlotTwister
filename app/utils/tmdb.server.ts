@@ -110,7 +110,7 @@ const popularMoviesSchema = z.object({
   total_results: z.number(),
 })
 
-type PopularMoviesResponse = z.infer<typeof popularMoviesSchema>
+export type PopularMoviesResponse = z.infer<typeof popularMoviesSchema>
 
 async function tmdbRequest<T>(endpoint: string): Promise<T> {
   const url = new URL(endpoint, TMDB_API_BASE_URL)
@@ -202,4 +202,35 @@ export async function searchMovies(
   })
 }
 
+const movieDetailsSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  poster_path: z.string().nullable(),
+  // Add any other fields you need from the movie details
+})
+
+export type MovieDetails = z.infer<typeof movieDetailsSchema>
+
+export async function getMovieDetails(
+  movieId: number,
+  { timings }: { timings?: Timings } = {}
+): Promise<MovieDetails> {
+  return cachified({
+    key: `tmdb:movie:${movieId}`,
+    cache,
+    timings,
+    getFreshValue: () => tmdbRequest<MovieDetails>(`/3/movie/${movieId}`),
+    checkValue: movieDetailsSchema,
+    ttl: 1000 * 60 * 60 * 24, // 24 hours
+    staleWhileRevalidate: 1000 * 60 * 60 * 24 * 7, // 7 days
+  })
+}
+
 // Add other TMDB API functions as needed
+
+export type MovieSearchResult = {
+  id: number
+  title: string
+  poster_path: string | null
+  // Add other properties as needed
+}

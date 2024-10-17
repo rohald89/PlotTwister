@@ -8,7 +8,7 @@ import {
 	Link,
 } from '@remix-run/react'
 import { useState, useMemo } from 'react'
-import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { GeneralErrorBoundary } from '#app/components/error-boundary'
 import { MovieTrailerDialog } from '#app/components/movietrailer-dialog'
 import { useToast } from '#app/components/toaster'
 import {
@@ -17,15 +17,15 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from '#app/components/ui/accordion'
-import { Button } from '#app/components/ui/button.tsx'
-import { Icon } from '#app/components/ui/icon.tsx'
-import { ScrollArea, ScrollBar } from '#app/components/ui/scroll-area.js'
+import { Button } from '#app/components/ui/button'
+import { Icon } from '#app/components/ui/icon'
+import { ScrollArea, ScrollBar } from '#app/components/ui/scroll-area'
 import {
 	Tabs,
 	TabsContent,
 	TabsList,
 	TabsTrigger,
-} from '#app/components/ui/tabs.js'
+} from '#app/components/ui/tabs'
 import { WatchProvidersDialog } from '#app/components/watch-provider-dialog'
 import { getUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
@@ -35,12 +35,11 @@ import {
 	getRecommendationString,
 	getReleaseYear,
 } from '#app/utils/misc.js'
-import { getMovie, type MovieListItem } from '#app/utils/tmdb.server.ts'
-import { type Toast } from '#app/utils/toast.server.js'
+import { getMovie, type MovieListItem } from '#app/utils/tmdb.server'
+import { type Toast } from '#app/utils/toast.server'
 import { AlternateEndingEditor } from './__ending-editor'
 import { MovieRating } from './__movie-rating'
 import { VoteButtons } from './__vote-buttons'
-export { action } from './__ending-editor.server'
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const userId = await getUserId(request)
@@ -320,7 +319,7 @@ function AlternateEndings() {
 							</div>
 						</AccordionTrigger>
 						<AccordionContent>
-							<p>{ending.content}</p>
+							<p className="whitespace-pre-wrap">{ending.content}</p>
 							<p className="mt-2 text-sm text-gray-500">
 								by {ending.author.username}
 							</p>

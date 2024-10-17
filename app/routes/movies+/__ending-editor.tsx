@@ -29,7 +29,7 @@ export const AlternateEndingEditorSchema = z.object({
 	title: z.string().min(titleMinLength).max(titleMaxLength),
 	content: z.string().min(contentMinLength).max(contentMaxLength),
 	prompt: z.string().min(1).max(500),
-	tmdbMovieId: z.number(),
+	tmdbMovieId: z.coerce.number(), // This will coerce the string to a number
 })
 
 export function AlternateEndingEditor({

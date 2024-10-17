@@ -44,6 +44,7 @@ model AlternateEnding {
 
   votes       Vote[]
   score       Int      @default(0)
+  contestEntry ContestEntry?
 }
 
 model Note {
@@ -207,6 +208,51 @@ model Vote {
   userId            String
   alternateEnding   AlternateEnding @relation(fields: [alternateEndingId], references: [id], onDelete: Cascade)
   alternateEndingId String
+  contestEntry      ContestEntry?   @relation(fields: [contestEntryId], references: [id])
+  contestEntryId    String?
 
   @@unique([userId, alternateEndingId])
+}
+
+model Contest {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  theme         String
+  startDate     DateTime
+  endDate       DateTime
+  votingEndDate DateTime
+  status        String   @default("UPCOMING") // Changed from enum to string
+  entries       ContestEntry[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  movies     ContestMovie[]
+}
+
+model ContestMovie {
+  id        String   @id @default(cuid())
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  contestId String
+  tmdbMovieId Int
+  title     String
+  posterPath String
+
+  @@unique([contestId, tmdbMovieId])
+}
+
+model ContestEntry {
+  id              String   @id @default(cuid())
+  contest         Contest  @relation(fields: [contestId], references: [id])
+  contestId       String
+  alternateEnding AlternateEnding @relation(fields: [alternateEndingId], references: [id])
+  alternateEndingId String @unique
+  voteCount       Int      @default(0)
+  votes           Vote[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([contestId, alternateEndingId])
 }

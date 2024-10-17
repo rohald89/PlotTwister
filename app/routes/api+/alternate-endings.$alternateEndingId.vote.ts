@@ -20,7 +20,12 @@ export async function action({ params, request }: ActionFunctionArgs) {
   try {
     const result = await prisma.$transaction(async (tx) => {
       const existingVote = await tx.vote.findUnique({
-        where: { userId_alternateEndingId: { userId, alternateEndingId } },
+        where: {
+          userId_alternateEndingId: {
+            userId,
+            alternateEndingId,
+          },
+        },
       })
 
       if (existingVote) {
